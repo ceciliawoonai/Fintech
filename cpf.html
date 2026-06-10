@@ -1306,6 +1306,23 @@ function validateAllocation() {
   }
 }
 
+// Mobile menu toggle function
+function toggleMobileMenu() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.querySelector('.mobile-overlay');
+  const body = document.body;
+
+  sidebar.classList.toggle('show');
+  overlay.classList.toggle('show');
+
+  // Prevent scrolling when menu is open
+  if (sidebar.classList.contains('show')) {
+    body.style.overflow = 'hidden';
+  } else {
+    body.style.overflow = '';
+  }
+}
+
 // Initialize
 document.getElementById('payout-slider').value = document.getElementById('desired-payout').value;
 updateSliderValue();
@@ -1313,8 +1330,7 @@ updateSliderValue();
 // Add event listener for age input
 document.getElementById('age').addEventListener('input', updateAllocationRates);
 
-
-// Close mobile menu when navigating between panels
+// Navigation
 function showPanel(id) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
