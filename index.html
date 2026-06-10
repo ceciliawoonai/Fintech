@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Financial Planning System — Demo</title>
+<title>FinPlan AI — Client Case Management</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -88,11 +88,6 @@ html,body{height:100%;background:var(--navy);color:var(--white);font-family:'Int
 .seg-name{font-size:12px;font-weight:600;color:var(--white);margin-bottom:4px;line-height:1.3}
 .seg-age{font-size:11px;color:var(--muted)}
 
-/* COVERAGE METER */
-.coverage-ring{position:relative;width:80px;height:80px;flex-shrink:0}
-.coverage-ring svg{transform:rotate(-90deg)}
-.coverage-pct{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:16px;font-weight:700;color:var(--white)}
-
 /* PROGRESS STEPS */
 .steps{display:flex;gap:0;margin-bottom:28px}
 .step-item{flex:1;display:flex;flex-direction:column;align-items:center;position:relative}
@@ -167,11 +162,6 @@ textarea.form-input{resize:vertical;min-height:70px}
 .client-banner{background:rgba(13,148,136,.12);border:1px solid rgba(13,148,136,.3);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:24px}
 .client-banner-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--purple));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
 
-/* AI INSIGHT BOX */
-.ai-box{background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.3);border-radius:10px;padding:14px 16px;margin-top:16px}
-.ai-box-title{font-size:11px;font-weight:700;color:#C4B5FD;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
-.ai-box-text{font-size:12px;color:rgba(196,181,253,.8);line-height:1.6}
-
 /* PRIORITY CHIP */
 .priority-chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px}
 .p1{background:rgba(239,68,68,.2);color:#FCA5A5}
@@ -180,25 +170,13 @@ textarea.form-input{resize:vertical;min-height:70px}
 .p4{background:rgba(16,185,129,.2);color:#6EE7B7}
 .p5{background:rgba(139,92,246,.2);color:#C4B5FD}
 
-/* COMPARISON TABLE */
-.comp-table{width:100%;border-collapse:collapse;font-size:12px}
-.comp-table th{text-align:left;padding:8px 12px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border)}
-.comp-table td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--white)}
-.comp-table tr:last-child td{border-bottom:none}
-	.comp-table .bad{color:#FCA5A5}
-	.comp-table .good{color:#6EE7B7}
-
-	/* MODAL */
-	.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}
-	.modal-overlay.show{display:flex}
-	.modal{background:var(--navy2);border:1px solid var(--border);border-radius:var(--radius-lg);width:100%;max-width:600px;max-height:90vh;overflow-y:auto;padding:24px;position:relative}
-	.modal-close{position:absolute;top:16px;right:16px;cursor:pointer;font-size:20px;color:var(--muted)}
-	
-	/* SEGMENT MANAGEMENT */
-	.seg-card .seg-actions{position:absolute;top:8px;right:8px;display:none;gap:4px}
-	.seg-card:hover .seg-actions{display:flex}
-	.btn-icon{width:24px;height:24px;padding:0;justify-content:center;border-radius:4px;font-size:12px}
-	</style>
+/* CLIENT FILES */
+.client-file-card{background:var(--navy2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .15s}
+.client-file-card:hover{border-color:var(--teal);background:rgba(13,148,136,.05)}
+.client-file-info{flex:1}
+.client-file-name{font-size:14px;font-weight:600;color:var(--white)}
+.client-file-meta{font-size:11px;color:var(--muted);margin-top:2px}
+</style>
 </head>
 <body>
 
@@ -207,11 +185,14 @@ textarea.form-input{resize:vertical;min-height:70px}
 <div id="sidebar">
   <div class="brand">
     <div class="brand-name">FinPlan AI</div>
-    <div class="brand-sub">Agent Productivity System</div>
+    <div class="brand-sub">Client Case Management</div>
   </div>
   <nav class="nav">
     <button class="nav-item active" onclick="showPanel('dashboard')" id="nav-dashboard">
-      <span class="nav-icon">◉</span> Client Segments <span class="nav-badge">15</span>
+      <span class="nav-icon">◉</span> Segment Templates
+    </button>
+    <button class="nav-item" onclick="showPanel('clientfiles')" id="nav-clientfiles">
+      <span class="nav-icon">📁</span> Client Files <span class="nav-badge" id="client-count-badge">0</span>
     </button>
     <button class="nav-item" onclick="showPanel('meeting')" id="nav-meeting">
       <span class="nav-icon">◈</span> Meeting Planner
@@ -230,8 +211,8 @@ textarea.form-input{resize:vertical;min-height:70px}
     <div class="client-pill">
       <div class="client-avatar" id="sb-avatar">—</div>
       <div class="client-info">
-        <strong id="sb-name">No client selected</strong>
-        <span id="sb-segment">Select a segment to begin</span>
+        <strong id="sb-name">No client active</strong>
+        <span id="sb-segment">Select from dashboard or files</span>
       </div>
     </div>
   </div>
@@ -243,204 +224,125 @@ textarea.form-input{resize:vertical;min-height:70px}
 <!-- ═══════════════════════════════════════════════════════ DASHBOARD -->
 <div class="panel active" id="panel-dashboard">
   <div class="panel-header">
-    <div class="panel-title">Client Segment Dashboard</div>
-    <div class="panel-sub">Select a client segment to load their profile, discovery questions, gaps, and product fit</div>
-  </div>
-
-  <div class="grid-4" style="margin-bottom:24px">
-    <div class="stat"><div class="stat-val">15</div><div class="stat-label">Client segments</div></div>
-    <div class="stat"><div class="stat-val">Age 22–62</div><div class="stat-label">Full age coverage</div></div>
-    <div class="stat"><div class="stat-val">S$2k–30k</div><div class="stat-label">Income range / mo</div></div>
-    <div class="stat"><div class="stat-val">6</div><div class="stat-label">Priority categories</div></div>
+    <div class="panel-title">Segment Templates</div>
+    <div class="panel-sub">Select a template to start a new client case</div>
   </div>
 
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
     <span style="font-size:12px;color:var(--muted)">Filter:</span>
-    <button class="btn btn-sm btn-primary" onclick="filterSegs('all')" id="f-all">All</button>
+    <button class="btn btn-sm btn-primary" onclick="filterSegs('all')" id="f-all">All 15</button>
     <button class="btn btn-sm btn-ghost" onclick="filterSegs('protection')" id="f-protection">Protection</button>
     <button class="btn btn-sm btn-ghost" onclick="filterSegs('wealth')" id="f-wealth">Wealth</button>
     <button class="btn btn-sm btn-ghost" onclick="filterSegs('retirement')" id="f-retirement">Retirement</button>
     <button class="btn btn-sm btn-ghost" onclick="filterSegs('medical')" id="f-medical">Medical</button>
     <button class="btn btn-sm btn-ghost" onclick="filterSegs('legacy')" id="f-legacy">Legacy</button>
-    <button class="btn btn-sm btn-primary" style="margin-left:auto;background:var(--purple)" onclick="openCreateModal()">+ Create New</button>
   </div>
 
   <div id="seg-grid" class="seg-grid"></div>
 
   <div id="seg-detail" style="display:none">
-    <div style="display:flex;gap:16px;align-items:flex-start">
-      <div style="flex:2">
-        <div class="card" style="margin-bottom:16px">
-          <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
-            <div id="sd-icon" class="seg-icon" style="width:48px;height:48px;font-size:24px"></div>
-            <div>
-              <div id="sd-name" style="font-size:18px;font-weight:700;color:var(--white)"></div>
-              <div id="sd-profile" style="font-size:12px;color:var(--muted);margin-top:3px"></div>
-            </div>
-            <div style="margin-left:auto">
-              <button class="btn btn-primary" onclick="startMeeting()">Start meeting →</button>
-            </div>
-          </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px" id="sd-tags"></div>
-          <div class="grid-3" style="margin-bottom:16px">
-            <div><div class="form-label">Age range</div><div id="sd-age" style="font-size:14px;color:var(--white);font-weight:600"></div></div>
-            <div><div class="form-label">Monthly income</div><div id="sd-income" style="font-size:14px;color:var(--white);font-weight:600"></div></div>
-            <div><div class="form-label">Priority focus</div><div id="sd-priority" style="font-size:14px;font-weight:600"></div></div>
-          </div>
-          <div class="form-label" style="margin-bottom:8px">Key financial needs</div>
-          <div id="sd-needs" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+        <div id="sd-icon" class="seg-icon" style="width:48px;height:48px;font-size:24px"></div>
+        <div>
+          <div id="sd-name" style="font-size:18px;font-weight:700;color:var(--white)"></div>
+          <div id="sd-profile" style="font-size:12px;color:var(--muted);margin-top:3px"></div>
         </div>
-
-        <div class="card">
-          <div class="form-label" style="margin-bottom:12px">Common coverage gaps</div>
-          <div id="sd-gaps"></div>
-          <div class="form-label" style="margin-top:16px;margin-bottom:8px">Typical objections</div>
-          <div id="sd-objections"></div>
-        </div>
+        <button class="btn btn-primary" style="margin-left:auto" onclick="startMeeting()">Start New Case</button>
       </div>
-      <div style="flex:1">
-        <div class="card" style="margin-bottom:16px">
-          <div class="form-label" style="margin-bottom:12px">Recommended products</div>
-          <div id="sd-products"></div>
-        </div>
-        <div class="card">
-          <div class="form-label" style="margin-bottom:12px">Discovery questions</div>
-          <div id="sd-questions"></div>
-        </div>
+      <div class="grid-3">
+        <div class="stat"><div class="stat-val" id="sd-age" style="font-size:16px"></div><div class="stat-label">Target Age</div></div>
+        <div class="stat"><div class="stat-val" id="sd-income" style="font-size:16px"></div><div class="stat-label">Est. Income</div></div>
+        <div class="stat"><div id="sd-priority"></div><div class="stat-label">Primary Need</div></div>
       </div>
     </div>
   </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ CLIENT FILES -->
+<div class="panel" id="panel-clientfiles">
+  <div class="panel-header">
+    <div class="panel-title">Client Case Library</div>
+    <div class="panel-sub">Manage and reload your saved client sessions</div>
+  </div>
+  <div id="client-list-empty" style="text-align:center;padding:60px 0">
+    <div style="font-size:48px;margin-bottom:16px">📁</div>
+    <div style="font-size:16px;color:var(--white);margin-bottom:8px">No saved cases yet</div>
+    <div style="font-size:13px;color:var(--muted)">Start a new case from the Segment Templates to see it here</div>
+  </div>
+  <div id="client-list" style="display:none"></div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════ MEETING PLANNER -->
 <div class="panel" id="panel-meeting">
   <div class="panel-header">
     <div class="panel-title">Meeting Planner</div>
-    <div class="panel-sub">Step-by-step system for every client interaction</div>
+    <div class="panel-sub">Structured discovery process for your client</div>
   </div>
 
   <div id="meeting-no-client" style="text-align:center;padding:60px 0">
     <div style="font-size:48px;margin-bottom:16px">◈</div>
-    <div style="font-size:16px;color:var(--white);margin-bottom:8px">No client segment selected</div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:24px">Go to the Dashboard and select a segment to begin a meeting session</div>
-    <button class="btn btn-primary" onclick="showPanel('dashboard')">← Select a segment</button>
+    <div style="font-size:16px;color:var(--white);margin-bottom:8px">No active session</div>
+    <button class="btn btn-primary" onclick="showPanel('dashboard')">← Go to templates</button>
   </div>
 
   <div id="meeting-content" style="display:none">
-    <div id="client-banner" class="client-banner" style="display:none">
+    <div class="client-banner" id="client-banner">
       <div class="client-banner-avatar" id="mb-avatar"></div>
       <div style="flex:1">
-        <div style="font-size:13px;font-weight:600;color:var(--white)" id="mb-name">Client</div>
-        <div style="font-size:11px;color:var(--teal2)" id="mb-segment">Segment</div>
+        <div style="font-size:13px;font-weight:600;color:var(--white)" id="mb-name">Client Name</div>
+        <div style="font-size:11px;color:var(--teal2)" id="mb-segment"></div>
       </div>
-      <div style="font-size:11px;color:var(--muted)" id="mb-step-label">Step 1 of 5</div>
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em" id="mb-step-label">Step 1 of 5</div>
     </div>
 
-    <div class="steps" id="meeting-steps">
-      <div class="step-item active" id="ms0"><div class="step-circle">1</div><div class="step-label">Client<br>Info</div></div>
-      <div class="step-item" id="ms1"><div class="step-circle">2</div><div class="step-label">Discovery<br>Questions</div></div>
-      <div class="step-item" id="ms2"><div class="step-circle">3</div><div class="step-label">Needs<br>Analysis</div></div>
-      <div class="step-item" id="ms3"><div class="step-circle">4</div><div class="step-label">Gap<br>Scoring</div></div>
-      <div class="step-item" id="ms4"><div class="step-circle">5</div><div class="step-label">Objection<br>Handling</div></div>
+    <div class="steps">
+      <div class="step-item active" id="ms0"><div class="step-circle">1</div><div class="step-label">Identify</div></div>
+      <div class="step-item" id="ms1"><div class="step-circle">2</div><div class="step-label">Discovery</div></div>
+      <div class="step-item" id="ms2"><div class="step-circle">3</div><div class="step-label">Needs</div></div>
+      <div class="step-item" id="ms3"><div class="step-circle">4</div><div class="step-label">Gap Score</div></div>
+      <div class="step-item" id="ms4"><div class="step-circle">5</div><div class="step-label">Objections</div></div>
     </div>
 
-    <!-- Step 0: Client Info -->
-    <div id="meeting-step-0">
-      <div class="card">
-        <div style="font-size:15px;font-weight:600;color:var(--white);margin-bottom:16px">Client details</div>
-        <div class="grid-2">
-          <div class="form-group"><label class="form-label">Client name</label><input class="form-input" id="m-name" placeholder="Full name"></div>
-          <div class="form-group"><label class="form-label">Age</label><input class="form-input" type="number" id="m-age" placeholder="e.g. 34"></div>
-          <div class="form-group"><label class="form-label">Monthly income (S$)</label><input class="form-input" type="number" id="m-income" placeholder="e.g. 8000"></div>
-          <div class="form-group"><label class="form-label">Marital status</label>
-            <select class="form-input" id="m-marital"><option>Single</option><option>Married</option><option>Divorced</option><option>Widowed</option></select>
-          </div>
-          <div class="form-group"><label class="form-label">Dependants</label><input class="form-input" id="m-dep" placeholder="e.g. 2 children, 1 elderly parent"></div>
-          <div class="form-group"><label class="form-label">Employment</label>
-            <select class="form-input" id="m-emp"><option>Employed (full-time)</option><option>Self-employed</option><option>Business owner</option><option>Freelancer / Gig</option><option>Part-time</option></select>
-          </div>
-        </div>
-        <div class="form-group"><label class="form-label">Existing coverage (list what they have)</label><textarea class="form-input" id="m-cover" placeholder="e.g. NTUC term S$200k, company H&S only — no personal CI"></textarea></div>
-        <div class="form-group"><label class="form-label">Health notes</label><textarea class="form-input" id="m-health" placeholder="Pre-existing conditions, loading, exclusions…"></textarea></div>
+    <!-- Step 0: Identify -->
+    <div id="meeting-step-0" class="card">
+      <div class="form-group">
+        <label class="form-label">Client Full Name</label>
+        <input class="form-input" id="m-name" placeholder="Enter client name...">
       </div>
-      <div style="display:flex;justify-content:flex-end;margin-top:16px">
-        <button class="btn btn-primary" onclick="meetingNext()">Next: discovery questions →</button>
-      </div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.5">Enter the client's name to begin the case. All progress will be saved under this file.</div>
     </div>
 
-    <!-- Step 1: Discovery Questions -->
+    <!-- Step 1: Discovery -->
     <div id="meeting-step-1" style="display:none">
-      <div class="card">
-        <div style="font-size:15px;font-weight:600;color:var(--white);margin-bottom:4px">Discovery questions</div>
-        <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Tick each question as you cover it in the conversation</div>
-        <div id="m-questions"></div>
-      </div>
-      <div style="display:flex;justify-content:space-between;margin-top:16px">
-        <button class="btn btn-ghost" onclick="meetingBack()">← Back</button>
-        <button class="btn btn-primary" onclick="meetingNext()">Next: needs analysis →</button>
-      </div>
+      <div class="card"><div id="m-questions"></div></div>
     </div>
 
-    <!-- Step 2: Needs Analysis -->
+    <!-- Step 2: Needs -->
     <div id="meeting-step-2" style="display:none">
-      <div class="card">
-        <div style="font-size:15px;font-weight:600;color:var(--white);margin-bottom:4px">Financial needs — tick all that apply</div>
-        <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Check what the client has confirmed they need</div>
-        <div id="m-needs"></div>
-      </div>
-      <div style="display:flex;justify-content:space-between;margin-top:16px">
-        <button class="btn btn-ghost" onclick="meetingBack()">← Back</button>
-        <button class="btn btn-primary" onclick="meetingNext()">Next: gap scoring →</button>
-      </div>
+      <div class="card"><div id="m-needs"></div></div>
     </div>
 
-    <!-- Step 3: Gap Scoring -->
+    <!-- Step 3: Gap Score -->
     <div id="meeting-step-3" style="display:none">
-      <div class="grid-2">
-        <div>
-          <div class="card" style="margin-bottom:16px">
-            <div style="font-size:15px;font-weight:600;color:var(--white);margin-bottom:16px">Coverage score</div>
-            <div style="display:flex;align-items:center;gap:20px">
-              <div>
-                <div class="score-big" id="m-score-val" style="color:var(--teal)">0%</div>
-                <div class="score-label">needs covered</div>
-              </div>
-              <div style="flex:1">
-                <div class="gap-track" style="height:10px"><div class="gap-fill" id="m-score-bar" style="width:0%;background:var(--teal)"></div></div>
-                <div style="font-size:11px;color:var(--muted);margin-top:6px" id="m-score-sub"></div>
-              </div>
-            </div>
-          </div>
-          <div class="card">
-            <div style="font-size:15px;font-weight:600;color:var(--white);margin-bottom:12px">Confirmed gaps</div>
-            <div id="m-gaps"></div>
-          </div>
-        </div>
-        <div class="card">
-          <div style="font-size:15px;font-weight:600;color:var(--white);margin-bottom:12px">Gap analysis</div>
-          <div id="m-gap-bars"></div>
-        </div>
-      </div>
-      <div style="display:flex;justify-content:space-between;margin-top:16px">
-        <button class="btn btn-ghost" onclick="meetingBack()">← Back</button>
-        <button class="btn btn-primary" onclick="meetingNext()">Next: objection handling →</button>
+      <div class="card" style="text-align:center;padding:40px">
+        <div class="score-big" id="m-score-val">0%</div>
+        <div class="score-label">Financial Coverage Score</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:16px;max-width:300px;margin-left:auto;margin-right:auto">Based on confirmed needs vs current coverage.</div>
       </div>
     </div>
 
-    <!-- Step 4: Objection Handling -->
+    <!-- Step 4: Objections -->
     <div id="meeting-step-4" style="display:none">
-      <div class="card" style="margin-bottom:16px">
-        <div style="font-size:15px;font-weight:600;color:var(--white);margin-bottom:4px">Objection responses</div>
-        <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Click any objection to reveal the suggested response</div>
-        <div id="m-objections"></div>
-      </div>
-      <div class="card">
-        <div style="font-size:15px;font-weight:600;color:var(--white);margin-bottom:12px">Meeting notes</div>
-        <textarea class="form-input" id="m-notes" placeholder="Any additional notes from this meeting…" style="min-height:80px"></textarea>
-      </div>
-      <div style="display:flex;justify-content:space-between;margin-top:16px">
-        <button class="btn btn-ghost" onclick="meetingBack()">← Back</button>
-        <button class="btn btn-primary" onclick="buildRecommendation()">Build recommendation →</button>
+      <div id="m-objections"></div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;margin-top:24px">
+      <button class="btn btn-ghost" onclick="meetingBack()">Back</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" onclick="saveCurrentCase()">Save Case</button>
+        <button class="btn btn-primary" id="btn-next" onclick="meetingNext()">Next Step</button>
+        <button class="btn btn-primary" id="btn-recommend" style="display:none" onclick="buildRecommendation()">Generate Solution</button>
       </div>
     </div>
   </div>
@@ -449,263 +351,48 @@ textarea.form-input{resize:vertical;min-height:70px}
 <!-- ═══════════════════════════════════════════════════════ RECOMMENDATION -->
 <div class="panel" id="panel-recommendation">
   <div class="panel-header">
-    <div class="panel-title">Financial Planning Recommendation</div>
-    <div class="panel-sub">AI-generated, client-specific proposal with Singapore products</div>
+    <div class="panel-title">Recommendation</div>
+    <div class="panel-sub">Customised financial solution based on client discovery</div>
   </div>
-
   <div id="rec-empty" style="text-align:center;padding:60px 0">
     <div style="font-size:48px;margin-bottom:16px">◆</div>
-    <div style="font-size:16px;color:var(--white);margin-bottom:8px">No recommendation generated yet</div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:24px">Complete a meeting session to generate a client-specific proposal</div>
-    <button class="btn btn-primary" onclick="showPanel('meeting')">← Go to meeting planner</button>
+    <div style="font-size:16px;color:var(--white);margin-bottom:8px">No recommendation generated</div>
+    <button class="btn btn-primary" onclick="showPanel('meeting')">Go to meeting planner</button>
   </div>
-
   <div id="rec-content" style="display:none">
-    <div class="client-banner" id="rec-banner">
+    <div class="client-banner">
       <div class="client-banner-avatar" id="rec-avatar"></div>
       <div style="flex:1">
         <div style="font-size:13px;font-weight:600;color:var(--white)" id="rec-client-name"></div>
         <div style="font-size:11px;color:var(--teal2)" id="rec-client-detail"></div>
       </div>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-sm btn-ghost" onclick="showPanel('servicing')">Proceed to servicing →</button>
-        <button class="btn btn-sm btn-danger" onclick="showPanel('followup')">Did not convert →</button>
-      </div>
+      <button class="btn btn-sm btn-ghost" onclick="saveCurrentCase()">Save Final File</button>
     </div>
-
-    <div class="grid-4" style="margin-bottom:20px" id="rec-stats"></div>
-
     <div class="grid-2">
-      <div>
-        <div class="card" style="margin-bottom:16px">
-          <div style="font-size:15px;font-weight:600;color:var(--white);margin-bottom:4px">Coverage gap analysis</div>
-          <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Based on confirmed needs and existing cover</div>
-          <div id="rec-gaps"></div>
-        </div>
-        <div class="card">
-          <div style="font-size:15px;font-weight:600;color:var(--white);margin-bottom:4px">Existing cover assessment</div>
-          <div style="font-size:12px;color:var(--muted);margin-bottom:12px" id="rec-existing-cover-label"></div>
-          <div class="grid-2">
-            <div style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:8px;padding:12px">
-              <div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:6px">✓ What it covers</div>
-              <div style="font-size:12px;color:rgba(110,231,183,.8)" id="rec-cover-good"></div>
-            </div>
-            <div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:12px">
-              <div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:6px">✗ What it misses</div>
-              <div style="font-size:12px;color:rgba(252,165,165,.8)" id="rec-cover-bad"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div>
-        <div class="card" style="margin-bottom:16px">
-          <div style="font-size:15px;font-weight:600;color:var(--white);margin-bottom:4px">Recommended plan</div>
-          <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Priority-ordered product recommendations</div>
-          <div id="rec-plan"></div>
-        </div>
-        <div class="card">
-          <div style="font-size:15px;font-weight:600;color:var(--white);margin-bottom:12px">Estimated monthly budget</div>
-          <div id="rec-budget"></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card" style="margin-top:16px">
-      <div style="font-size:15px;font-weight:600;color:var(--white);margin-bottom:12px">Immediate next steps</div>
-      <div id="rec-next-steps"></div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════════ POLICY SERVICING -->
-<div class="panel" id="panel-servicing">
-  <div class="panel-header">
-    <div class="panel-title">Policy Servicing Tracker</div>
-    <div class="panel-sub">Post-sale servicing calendar, policy register, and claims protocol</div>
-  </div>
-
-  <div id="srv-empty" style="text-align:center;padding:60px 0">
-    <div style="font-size:48px;margin-bottom:16px">◎</div>
-    <div style="font-size:16px;color:var(--white);margin-bottom:8px">No active client session</div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:24px">Complete a recommendation first, or start a new meeting</div>
-    <button class="btn btn-primary" onclick="showPanel('dashboard')">← Go to dashboard</button>
-  </div>
-
-  <div id="srv-content" style="display:none">
-    <div class="client-banner">
-      <div class="client-banner-avatar" id="srv-avatar"></div>
-      <div style="flex:1">
-        <div style="font-size:13px;font-weight:600;color:var(--white)" id="srv-name"></div>
-        <div style="font-size:11px;color:var(--teal2)" id="srv-detail"></div>
-      </div>
-      <div class="grid-2" style="gap:12px;min-width:200px">
-        <div class="stat" style="padding:8px 12px"><div class="stat-val" style="font-size:18px" id="srv-active">0</div><div class="stat-label">Policies active</div></div>
-        <div class="stat" style="padding:8px 12px"><div class="stat-val" style="font-size:18px;color:var(--red)" id="srv-gaps">0</div><div class="stat-label">Gaps remaining</div></div>
-      </div>
-    </div>
-
-    <div class="grid-2">
-      <div>
-        <div class="card" style="margin-bottom:16px">
-          <div style="font-size:15px;font-weight:600;color:var(--white);margin-bottom:12px">Policy register</div>
-          <div id="srv-policies"></div>
-        </div>
-        <div class="card">
-          <div style="font-size:15px;font-weight:600;color:var(--white);margin-bottom:12px">Claims readiness</div>
-          <div style="display:flex;flex-direction:column;gap:8px" id="srv-claims"></div>
-        </div>
-      </div>
-      <div>
-        <div class="card">
-          <div style="font-size:15px;font-weight:600;color:var(--white);margin-bottom:4px">Servicing calendar</div>
-          <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Required touchpoints after policy placement</div>
-          <div class="timeline" id="srv-calendar"></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card" style="margin-top:16px">
-      <div style="font-size:15px;font-weight:600;color:var(--white);margin-bottom:12px">Trigger-based review alerts</div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px" id="srv-triggers"></div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════════ FOLLOW-UP -->
-<div class="panel" id="panel-followup">
-  <div class="panel-header">
-    <div class="panel-title">Re-engagement Engine</div>
-    <div class="panel-sub">12-month follow-up system for clients who did not convert</div>
-  </div>
-
-  <div id="fu-empty" style="text-align:center;padding:60px 0">
-    <div style="font-size:48px;margin-bottom:16px">◐</div>
-    <div style="font-size:16px;color:var(--white);margin-bottom:8px">No prospect loaded</div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:24px">Use "Did not convert" from the recommendation page, or start a new meeting</div>
-    <button class="btn btn-primary" onclick="showPanel('dashboard')">← Go to dashboard</button>
-  </div>
-
-  <div id="fu-content" style="display:none">
-    <div class="client-banner" style="background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.3)">
-      <div class="client-banner-avatar" id="fu-avatar" style="background:linear-gradient(135deg,var(--red),var(--amber))"></div>
-      <div style="flex:1">
-        <div style="font-size:13px;font-weight:600;color:var(--white)" id="fu-name"></div>
-        <div style="font-size:11px;color:#FCA5A5">Prospect — did not convert</div>
-      </div>
-      <button class="btn btn-sm btn-ghost" onclick="showPanel('recommendation')">← Back to recommendation</button>
-    </div>
-
-    <div class="card" style="margin-bottom:16px">
-      <div style="font-size:15px;font-weight:600;color:var(--white);margin-bottom:8px">Record primary objection</div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px" id="fu-objs"></div>
-      <input class="form-input" id="fu-other" placeholder="Add specific notes on their reason…">
-    </div>
-
-    <div class="card" style="margin-bottom:16px">
-      <div style="font-size:15px;font-weight:600;color:var(--white);margin-bottom:4px">12-month re-engagement cadence</div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Structured outreach plan — value-first, relationship-led, not pressure-based</div>
-      <div class="timeline" id="fu-timeline"></div>
-    </div>
-
-    <div class="grid-2" style="margin-bottom:16px">
       <div class="card">
-        <div style="font-size:13px;font-weight:600;color:var(--red);margin-bottom:8px">Business triggers — re-open immediately</div>
-        <div style="display:flex;flex-direction:column;gap:6px" id="fu-biz-triggers"></div>
+        <div style="font-size:15px;font-weight:600;color:var(--white);margin-bottom:12px">Proposed Plan</div>
+        <div id="rec-plan"></div>
       </div>
       <div class="card">
-        <div style="font-size:13px;font-weight:600;color:var(--amber);margin-bottom:8px">Personal triggers — re-open immediately</div>
-        <div style="display:flex;flex-direction:column;gap:6px" id="fu-personal-triggers"></div>
+        <div style="font-size:15px;font-weight:600;color:var(--white);margin-bottom:12px">Budget Estimates</div>
+        <div id="rec-budget"></div>
       </div>
-    </div>
-
-    <div class="card">
-      <div style="font-size:15px;font-weight:600;color:var(--white);margin-bottom:12px">Log a contact</div>
-      <div class="grid-2" style="margin-bottom:10px">
-        <div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="fu-date"></div>
-        <div class="form-group"><label class="form-label">Channel</label>
-          <select class="form-input" id="fu-channel"><option>WhatsApp</option><option>Phone call</option><option>Email</option><option>In-person</option></select>
-        </div>
-      </div>
-      <div class="form-group"><label class="form-label">Outcome</label>
-        <select class="form-input" id="fu-outcome"><option>No response</option><option>Acknowledged, not ready</option><option>Interested — schedule meeting</option><option>Ready to proceed</option></select>
-      </div>
-      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="fu-notes" placeholder="What was said, any new information…"></textarea></div>
-      <button class="btn btn-primary btn-sm" onclick="logContact()">Log contact</button>
-      <div id="fu-log" style="margin-top:12px"></div>
     </div>
   </div>
 </div>
+
+<!-- ═══════════════════════════════════════════════════════ SERVICING & FOLLOWUP (Simplified for Demo) -->
+<div class="panel" id="panel-servicing"><div class="panel-title">Policy Servicing</div><p style="color:var(--muted);margin-top:20px">Load a saved client file to view servicing history.</p></div>
+<div class="panel" id="panel-followup"><div class="panel-title">Re-engagement</div><p style="color:var(--muted);margin-top:20px">Load a saved client file to view follow-up timeline.</p></div>
 
 </div><!-- end #main -->
 </div><!-- end #app -->
 
 <div class="notif" id="notif"></div>
 
-<!-- CREATE MODAL -->
-<div class="modal-overlay" id="modal-create">
-  <div class="modal">
-    <span class="modal-close" onclick="closeCreateModal()">×</span>
-    <div style="font-size:18px;font-weight:700;margin-bottom:4px" id="modal-title">Create New Client Segment</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:20px">Define a new profile to scale your analytics tool</div>
-    
-    <div class="grid-2">
-      <div class="form-group">
-        <label class="form-label">Segment Name</label>
-        <input class="form-input" id="new-name" placeholder="e.g. High Net Worth">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Icon (Emoji)</label>
-        <input class="form-input" id="new-icon" placeholder="💎">
-      </div>
-    </div>
-    
-    <div class="grid-2">
-      <div class="form-group">
-        <label class="form-label">Priority</label>
-        <select class="form-input" id="new-priority">
-          <option value="protection">Protection</option>
-          <option value="wealth">Wealth</option>
-          <option value="retirement">Retirement</option>
-          <option value="medical">Medical</option>
-          <option value="legacy">Legacy</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Age Range</label>
-        <input class="form-input" id="new-age" placeholder="e.g. 40–60">
-      </div>
-    </div>
-    
-    <div class="form-group">
-      <label class="form-label">Income Range</label>
-      <input class="form-input" id="new-income" placeholder="e.g. S$20k–50k/mo">
-    </div>
-    
-    <div class="form-group">
-      <label class="form-label">Profile Description</label>
-      <textarea class="form-input" id="new-profile" placeholder="Describe the typical client in this segment..."></textarea>
-    </div>
-    
-    <div class="form-group">
-      <label class="form-label">Key Needs (one per line)</label>
-      <textarea class="form-input" id="new-needs" placeholder="Need 1&#10;Need 2..."></textarea>
-    </div>
-
-    <div class="form-group">
-      <label class="form-label">Discovery Questions (one per line)</label>
-      <textarea class="form-input" id="new-questions" placeholder="Question 1&#10;Question 2..."></textarea>
-    </div>
-
-    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:10px">
-      <button class="btn btn-ghost" onclick="closeCreateModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="saveNewSegment()">Save Segment</button>
-    </div>
-  </div>
-</div>
-
 <script>
 // ═══════════════════════════════════════════════════════════
-// DATA
+// DATA (THE 15 SEGMENTS)
 // ═══════════════════════════════════════════════════════════
 const SEGMENTS = [
   {id:0, icon:"👶", name:"New parents", priority:"protection", color:"#3B82F6", age:"28–38", income:"S$8–15k/mo",
@@ -713,162 +400,99 @@ const SEGMENTS = [
    needs:["Life cover for both spouses","Critical illness — early stage","Child education savings plan","Hospitalisation & surgical upgrade","Disability income if sole breadwinner"],
    gaps:["No personal CI or minimal term only","No education savings plan started","H&S is basic employer cover only"],
    products:[{name:"Term life (20–30yr)",p:1},{name:"CI + early stage rider",p:1},{name:"ILP / endowment for education",p:2},{name:"Shield plan upgrade",p:3}],
-   questions:["Do both of you have active life coverage now?","Is your H&S personal or company plan?","Have you started any savings plan for your child?","Who is the primary breadwinner?","Do you have an emergency fund (3–6 months)?"],
-   objections:[{q:"We're tight on cash with the new baby",a:"Completely understandable — and that's exactly why a low-cost term plan now locks in your insurability before any health issues arise. We can start with S$50–80 per month and build from there as your income grows."},
-     {q:"We already have company insurance",a:"Company cover ends the day you resign or are retrenched — and that's often when you need it most. Personal cover travels with you regardless of employment, and locks in your health rating while you're young and healthy."},
-     {q:"We'll plan next year",a:"Every year you wait costs more in premium and risks a health event closing the door on certain products. The best time to get covered is before you need it — and for your child's education plan, starting one year later means meaningfully less compounding."}]},
+   questions:["Do both of you have active life coverage now?","Is your H&S personal or company plan?","Have you started any savings plan for your child?","Who is the primary breadwinner?","Do you have an emergency fund (3–6 months)?"]},
   {id:1, icon:"💼", name:"Young professionals", priority:"protection", color:"#10B981", age:"25–35", income:"S$4–10k/mo",
    profile:"Age 25–35, single or newly married, S$4–10k/mo. Building first financial foundation.",
    needs:["Hospitalisation & surgical plan","Personal accident cover","Critical illness — early stage","Term life (if dependants exist)","Income protection"],
    gaps:["Fully dependent on employer group cover","No personal CI","No savings discipline yet"],
    products:[{name:"Shield plan + rider",p:1},{name:"Early stage CI",p:1},{name:"Term life (if married)",p:2},{name:"Savings endowment",p:3}],
-   questions:["Do you have any personal insurance outside your company plan?","What happens to your coverage if you resign?","Any dependants relying on your income?","Have you thought about what happens if you're diagnosed with a serious illness?","Do you have any savings goal in the next 5–10 years?"],
-   objections:[{q:"I'm young and healthy, I don't need it yet",a:"That's actually the best time to get it — premiums are lowest and health conditions can't be used against you yet. A young professional who waits until 35 pays 40–60% more for the same coverage."},
-     {q:"Company insurance is enough",a:"It ends the day your employment does. And it doesn't cover the income replacement gap if you're critically ill and can't work for 2 years — which is exactly when you'd need it most."},
-     {q:"I'll sort it out when I earn more",a:"The premium you pay is based on your health and age at application — not your income. Waiting means paying more for the same product. Income grows; insurability shrinks."}]},
+   questions:["Do you have any personal insurance outside your company plan?","What happens to your coverage if you resign?","Any dependants relying on your income?","Have you thought about what happens if you're diagnosed with a serious illness?","Do you have any savings goal in the next 5–10 years?"]},
   {id:2, icon:"👨‍👩‍👧", name:"Mid-career parents", priority:"protection", color:"#EF4444", age:"35–50", income:"S$12–25k/mo",
    profile:"Age 35–50, married with 1–3 children, HHI S$12–25k. Peak obligations.",
    needs:["High life sum assured (mortgage + income replacement)","CI with multi-pay option","Education funding plan","Retirement savings","Enhanced medical plan"],
    gaps:["Under-insured relative to income and liabilities","No retirement savings plan started","CI may be outdated single-pay policy"],
    products:[{name:"Whole life or term ladder",p:1},{name:"Multi-pay CI",p:1},{name:"Endowment / ILP for education",p:2},{name:"Retirement annuity",p:2},{name:"Enhanced shield plan",p:3}],
-   questions:["What is your outstanding mortgage balance?","Are both parents covered? What sum assured?","Have you reviewed your CI coverage recently?","What age do you want to retire?","How are you funding your children's education?"],
-   objections:[{q:"Too expensive at this stage of life",a:"The real cost is being under-insured when you have maximum obligations — mortgage, children, ageing parents. A term top-up costs S$80–150 per month and protects S$500k in obligations. That's the right trade-off."},
-     {q:"Already have coverage",a:"When was it last reviewed? Most policies from 5+ years ago have sum assureds set at a lower income level. Your obligations have grown significantly — your coverage needs to match them."},
-     {q:"Need to check with spouse first",a:"Absolutely — I'd actually encourage both of you to review this together. I can prepare a joint summary that makes it easy for both of you to evaluate in one conversation."}]},
+   questions:["What is your outstanding mortgage balance?","Are both parents covered? What sum assured?","Have you reviewed your CI coverage recently?","What age do you want to retire?","How are you funding your children's education?"]},
   {id:3, icon:"🌅", name:"Pre-retirees", priority:"retirement", color:"#F59E0B", age:"50–62", income:"S$6–18k/mo",
    profile:"Age 50–62, HHI S$6–18k. Transition phase — income to wealth preservation.",
    needs:["Retirement income stream","CPF planning optimisation","Long-term care / CareShield upgrade","Medical coverage before age 70 renewal cliff","Legacy and estate planning"],
    gaps:["No formal retirement income plan","CareShield not supplemented","Life coverage may lapse before intended"],
    products:[{name:"Retirement annuity / CPF Life top-up",p:1},{name:"CareShield supplement",p:1},{name:"Whole life for legacy",p:2},{name:"Enhanced shield plan (before 75 lock-in)",p:2}],
-   questions:["What is your planned retirement age?","Are you currently topping up your CPF SA?","Do you have a CareShield supplement?","What income do you expect in retirement?","Have you thought about how your estate will be distributed?"],
-   objections:[{q:"Too late to start now",a:"It is never too late for the right product. A retirement annuity or CPF top-up done today still compounds for 10–15 years. The CareShield supplement is most valuable when taken before a health condition, not after."},
-     {q:"CPF will be enough",a:"CPF Life pays S$900–2,000/month at best. If your current lifestyle costs S$4,000–6,000 a month, the gap is significant — and it grows with inflation. We need to plan the bridge, not hope the gap doesn't exist."},
-     {q:"My children will take care of me",a:"That may be true, and it's also an enormous financial and emotional burden to place on them. A CareShield supplement and retirement annuity means they can care for you without it becoming a financial crisis."}]},
+   questions:["What is your planned retirement age?","Are you currently topping up your CPF SA?","Do you have a CareShield supplement?","What income do you expect in retirement?","Have you thought about how your estate will be distributed?"]},
   {id:4, icon:"🧑‍💻", name:"Self-employed", priority:"medical", color:"#EC4899", age:"30–55", income:"S$3–12k/mo",
    profile:"Age 30–55, irregular income. No employer benefits — typically completely underinsured.",
    needs:["Personal hospitalisation & surgical","CI + disability income","Business expense cover if applicable","Portable, non-employer-tied coverage","Emergency fund discipline"],
    gaps:["Zero employer coverage — none at all","No sick pay or disability income fallback","Income protection completely missing"],
    products:[{name:"Shield plan + rider",p:1},{name:"Standalone CI",p:1},{name:"Disability income plan",p:1},{name:"Term life (if dependants)",p:2}],
-   questions:["What happens to your income if you're hospitalised for 2 weeks?","Do you have any insurance at all right now?","What is your average monthly net income?","Do you have 6 months emergency reserve?","Do you have business partners with shared liabilities?"],
-   objections:[{q:"Income is irregular, can't commit to premiums",a:"Most disability income plans allow a 30-day waiting period and flexible payment modes. We can structure a plan around your average income, not your lowest month — and annual premium payment removes the monthly cash flow pressure."},
-     {q:"Will get it when business is more stable",a:"You're most insurable right now, before any health events. And the point of a disability income plan is precisely for the periods when business becomes unstable due to your health — it's backwards to wait for stability before covering instability."},
-     {q:"Too busy to deal with this",a:"I can have a complete proposal ready in 20 minutes based on what you've told me today. The application can be done digitally in your own time. You don't need another meeting — just a decision."}]},
-  {id:5, icon:"🏢", name:"Small biz owners", priority:"protection", color:"#8B5CF6", age:"30–55", income:"S$5–20k/mo",
-   profile:"Age 30–55. Business continuity and key-person risk are the primary concerns.",
-   needs:["Key-person insurance","Business loan / personal guarantee cover","Income continuity if owner is incapacitated","Succession / buy-sell funding","Personal cover independent of business"],
-   gaps:["No key-person policy in place","Personal and business finances mixed","No buy-sell agreement funded by insurance"],
-   products:[{name:"Key-person whole life / term",p:1},{name:"Business loan decreasing term",p:1},{name:"Disability income plan",p:1},{name:"CI standalone",p:2},{name:"Group H&S for employees",p:3}],
-   questions:["If you couldn't work for 6 months, what happens to the business?","Do you have a business loan or personal guarantee?","Do you have a business partner? Is there a buy-sell agreement?","Are your employees covered under group insurance?","Is your personal wealth separate from business assets?"],
-   objections:[{q:"Business is the priority, not personal cover",a:"A key-person policy is a business asset — it protects the company's revenue and credit if you're incapacitated. This is not personal insurance; this is business continuity planning."},
-     {q:"Will do it when the business grows",a:"The risk is highest now when the business most depends on you personally. When it grows, you'll have systems and people — the key-person risk actually reduces. Today is when you need it most."},
-     {q:"My accountant handles this",a:"Your accountant handles tax — this is risk management. And if you've signed a personal guarantee on a business loan, your personal assets are exposed the moment you can't service that loan. That's not an accounting issue; that's an insurance gap."}]},
-  {id:6, icon:"💑", name:"Newly married", priority:"protection", color:"#3B82F6", age:"25–35", income:"S$8–20k/mo",
-   profile:"Age 25–35, dual-income couple. Planning joint protection and future family needs.",
-   needs:["Joint life / individual term for both","CI for both spouses","Hospitalisation upgrade","Savings plan for home or family","Early education planning"],
-   gaps:["Coverage not reviewed post-marriage","No joint financial plan","H&S still on parents or employer basic"],
-   products:[{name:"Term life for both",p:1},{name:"CI + early stage for both",p:1},{name:"Shield plan upgrade",p:2},{name:"Endowment / savings plan",p:3}],
-   questions:["Have either of you reviewed your coverage since getting married?","Do both of you earn? What's the income split?","Are you planning to buy a home soon?","Any plans for children in the next 2–3 years?","Do you have wills in place?"],
-   objections:[{q:"Just got married, too many expenses",a:"Exactly — and right now before a mortgage, children, or health conditions, your premiums are at their lowest point ever. Getting covered today locks in your eligibility permanently."},
-     {q:"Will sort it out when we buy the flat",a:"The mortgage conversation will bring you back anyway — but waiting means your health may have changed, your premiums will be higher, and you'll have one more major financial commitment competing for attention."},
-     {q:"We're both healthy",a:"Health is exactly why you're eligible for good coverage right now. The time to buy an umbrella is before it rains."}]},
-  {id:7, icon:"🏠", name:"Home buyers", priority:"protection", color:"#10B981", age:"30–45", income:"S$8–18k/mo",
-   profile:"Age 30–45, recently mortgaged. Debt protection is the immediate priority.",
-   needs:["Mortgage reducing term / MRTA","Life sum assured to cover outstanding loan","CI so loan isn't defaulted on diagnosis","H&S upgrade","Disability income"],
-   gaps:["MRTA often skipped or underfunded","CI not linked to mortgage obligations","Shield plan still on basic tier"],
-   products:[{name:"Decreasing term (MRTA)",p:1},{name:"Level term to cover loan balance",p:1},{name:"CI with payout linked to loan cover",p:2},{name:"Enhanced shield plan",p:3}],
-   questions:["What is your outstanding mortgage balance?","If one income stops, can the other service the loan?","Do you have a MRTA or any mortgage insurance?","What happens to the property if both of you are incapacitated?","How long is your loan tenure?"],
-   objections:[{q:"Just bought — cash is very tight",a:"A decreasing term plan to cover your mortgage costs as little as S$40–60 per month. The bank gets paid if something happens — without it, your family loses the property. This is the minimum viable cover for a homeowner."},
-     {q:"The bank offered their own MRTA already",a:"Bank-packaged MRTA typically covers the bank's interest — not yours. It's rarely portable and often doesn't include CI or disability triggers. An independent plan protects your family, not just the lender."},
-     {q:"Will do it after renovation",a:"The renovation doesn't change your mortality or disability risk. If anything, the debt is higher now than it will ever be again — the coverage need is at its peak today."}]},
-  {id:8, icon:"🔄", name:"Career switchers", priority:"protection", color:"#EF4444", age:"28–45", income:"S$5–15k/mo",
-   profile:"Age 28–45, in career transition. Coverage gaps likely from old employer plan lapsing.",
-   needs:["Bridge coverage during employment gap","Review all existing policies","CI standalone (not employer-tied)","H&S personal plan","Income protection"],
-   gaps:["Old group plan terminated on resignation","Assumed coverage continues but it doesn't","CI and H&S now zero or minimal"],
-   products:[{name:"Shield plan (immediate)",p:1},{name:"CI standalone",p:1},{name:"Term life if dependants",p:2},{name:"Disability income",p:2}],
-   questions:["When did you leave your last job? Are you still covered?","What personal policies do you have — not group?","Has anything changed in your health since your last policy?","What's your income situation in the transition period?","Do you have dependants relying on you?"],
-   objections:[{q:"Not sure what I have",a:"That's the first thing we should establish — bring any policy documents you have and I'll review everything in 30 minutes. If your group cover has lapsed, you may already have a gap you don't know about."},
-     {q:"New company will give me cover anyway",a:"Group cover has a waiting period — usually 3 months after joining. You're unprotected now, during the transition. And if the new role falls through, you start the gap over again."},
-     {q:"Will sort it out once settled",a:"The problem with waiting is that a health event doesn't wait. The transition period is exactly when you're most exposed because you have no safety net."}]},
-  {id:9, icon:"✈️", name:"Expats in SG", priority:"medical", color:"#F59E0B", age:"25–50", income:"S$10–25k/mo",
-   profile:"Age 25–50, professionally employed in Singapore. Evaluating local vs. international options.",
-   needs:["International or portable medical cover","CI with worldwide coverage","Income protection not tied to SG employer","Portability on relocation","Investment-linked planning"],
-   gaps:["Employer plan ends on departure","No local CPF safety net","No permanent solution in place"],
-   products:[{name:"International shield / global health plan",p:1},{name:"Portable CI",p:1},{name:"ILP (USD denominated)",p:2},{name:"Whole life for portability",p:2}],
-   questions:["How long do you plan to stay in Singapore?","Is your coverage through your employer here?","What happens to your insurance when you relocate?","Do you have coverage in your home country still active?","Are you planning to retire here or elsewhere?"],
-   objections:[{q:"Company covers me fully",a:"Your company coverage ends the day your contract does — and in a country you're not a citizen of, you won't be able to apply for local cover mid-relocation. A portable plan travels with you regardless of employer or country."},
-     {q:"I might leave SG soon anyway",a:"That's exactly the case for a portable, internationally denominated plan. It's valid wherever you go — SG, Europe, US, home country. Local plans don't follow you. This one does."},
-     {q:"Too complex to sort out now",a:"It takes one meeting. I specialise in expat planning and can structure something simple and portable that you don't have to revisit every time you relocate."}]},
-  {id:10, icon:"⚖️", name:"Sandwich generation", priority:"protection", color:"#EC4899", age:"40–55", income:"S$8–20k/mo",
-   profile:"Age 40–55, supporting both children and ageing parents. Dual financial pressure.",
-   needs:["Own CI and disability income","Parents' hospitalisation upgrade / caregiver rider","Children's education savings","Retirement savings starting now","Estate planning basics"],
-   gaps:["Own coverage neglected while paying for family","Parents' H&S outdated or lapsed","No retirement savings started"],
-   products:[{name:"CI multi-pay",p:1},{name:"Caregiver rider for parents",p:1},{name:"Shield plan upgrade (own + parents)",p:2},{name:"Endowment for education or retirement",p:3}],
-   questions:["Are your parents currently insured and by whom?","Do you have CI coverage for yourself?","What would happen if your income stopped tomorrow?","Are you saving for retirement while managing these expenses?","Have you spoken to your parents about their healthcare wishes?"],
-   objections:[{q:"I take care of everyone else first",a:"That's admirable — but if you become critically ill, everyone who depends on you loses their safety net simultaneously. Your own CI is not selfish; it's the foundation the whole family stands on."},
-     {q:"Budget is completely stretched",a:"We can prioritise a simple CI plan for you first — S$80–120 per month — and layer the rest as income grows. The goal is to make sure the foundation is secure before building the rest."},
-     {q:"Parents don't want insurance",a:"Many parents are reluctant until they're the ones in hospital. I can prepare a simple one-page summary of what a CareShield supplement actually covers — sometimes seeing the numbers makes the conversation easier."}]},
-  {id:11, icon:"💎", name:"High-income earners", priority:"wealth", color:"#8B5CF6", age:"30–50", income:"S$15–30k/mo",
-   profile:"Age 30–50, HHI S$15k+. Wealth protection, legacy, and tax-efficient structures.",
-   needs:["Whole life for legacy and forced savings","ILP for wealth accumulation","CI with high sum assured","Estate and will planning","Premium financing if applicable"],
-   gaps:["Over-reliant on property as wealth store","No structured legacy plan","CI sum assured not proportionate to income"],
-   products:[{name:"Whole life (high SA)",p:1},{name:"ILP in multi-asset funds",p:1},{name:"Multi-pay CI",p:2},{name:"Universal life for legacy",p:3}],
-   questions:["Do you have a will and LPA in place?","What is your net worth split — property vs cash vs investments?","Is your CI sum assured proportionate to your income?","Have you thought about how your estate will be distributed?","Are you currently investing? What returns are you targeting?"],
-   objections:[{q:"I can self-insure",a:"Self-insuring a S$500k CI event means liquidating assets at the worst possible time — often while income has stopped and medical bills are running. A CI plan of S$300–500k means you never have to touch your wealth at a crisis moment."},
-     {q:"My lawyer handles estate",a:"Estate planning and insurance are complementary — your lawyer sets up the structure; insurance funds it. A will without funded beneficiaries is just a document. Legacy planning integrates both."},
-     {q:"Already have too many policies",a:"The question isn't how many — it's whether the right gaps are covered. If your CI sum assured was set 10 years ago at a lower income level, it may need upgrading regardless of how many policies you hold."}]},
-  {id:12, icon:"📈", name:"Newly promoted", priority:"wealth", color:"#3B82F6", age:"30–45", income:"S$8–18k/mo",
-   profile:"Age 30–45, recent income jump. Likely under-covered relative to new income level.",
-   needs:["Coverage review — increase sum assureds","CI top-up to match new income","Begin retirement savings","Upgrade H&S if on basic plan","Consider wealth accumulation"],
-   gaps:["Sum assured set years ago at lower income","No CI top-up since promotion","H&S not reviewed despite higher capacity"],
-   products:[{name:"CI top-up / new CI plan",p:1},{name:"Shield plan upgrade",p:2},{name:"ILP or endowment",p:2},{name:"Term top-up",p:3}],
-   questions:["When did you last review your sum assureds?","Has your income changed significantly in the last 2–3 years?","Is your CI still enough to cover your current lifestyle for 5 years?","Have you started investing outside of CPF?","What does retirement look like for you?"],
-   objections:[{q:"Existing cover seems fine",a:"Fine for what income level? If your cover was set 3 years ago when you earned 40% less, your lifestyle has outpaced your protection. A review takes 20 minutes and costs nothing."},
-     {q:"Just got promoted, too much on my plate",a:"Completely understood — and I can do all the preparation. You just need 30 minutes to review what I bring. The cost of delaying is paying higher premiums later or discovering a gap at the worst moment."},
-     {q:"Will review end of year",a:"Year-end is 6 months away. Every month at your new income level without matched coverage is a month of unprotected lifestyle. If something happened today, your family would be living on your old income level's payout."}]},
-  {id:13, icon:"🛵", name:"Gig workers", priority:"medical", color:"#10B981", age:"22–45", income:"S$2–6k/mo",
-   profile:"Age 22–45, variable income. Need affordable, essential cover — nothing more, nothing less.",
-   needs:["Affordable hospitalisation & surgical","Personal accident — work injury risk","Minimal CI coverage","Income protection basics","Emergency savings habit"],
-   gaps:["No employer insurance of any kind","No CPF contributions for some","Health costs completely out of pocket"],
-   products:[{name:"MediShield Life top-up (Integrated Shield)",p:1},{name:"PA plan",p:1},{name:"Basic CI",p:2},{name:"NTUC Income / Singlife starter plans",p:3}],
-   questions:["Do you have any insurance right now other than MediShield Life?","If you had an accident on the job, what would happen financially?","What is your average monthly income?","Do you have any savings set aside for emergencies?","Have you thought about what happens if you can't work for a month?"],
-   objections:[{q:"Can't afford premiums",a:"An Integrated Shield plan top-up starts from S$10–15 per month depending on your age and plan tier. A PA plan is another S$8–12 per month. For S$25/month — less than a meal delivery — you have basic medical and accident cover."},
-     {q:"Will get it when income is more stable",a:"Income instability is exactly the risk you're covering. A hospitalisation without insurance doesn't care whether your income is stable — and an accident on the job without PA cover means zero payout during recovery."},
-     {q:"CPF Medisave will cover me",a:"Medisave covers specific hospitalisation costs up to certain limits — it does not cover income lost during recovery, outpatient treatment, or accidents unrelated to hospitalisation. You need a plan that bridges those gaps."}]},
-  {id:14, icon:"❤️", name:"Special needs parents", priority:"legacy", color:"#EF4444", age:"30–55", income:"S$6–18k/mo",
-   profile:"Age 30–55. Long-term care and planning stability for a dependent with special needs.",
-   needs:["Whole life on parent (child as beneficiary)","Special Needs Trust setup","CI for parent — caregiver continuity","Disability coverage for parent","Long-term caregiver funding plan"],
-   gaps:["No trust structure in place","Whole life SA may not fund lifelong care","No plan if both parents are incapacitated"],
-   products:[{name:"Whole life (high SA, trust beneficiary)",p:1},{name:"Multi-pay CI",p:1},{name:"Caregiver income protection",p:2},{name:"Special Needs Trust referral",p:2}],
-   questions:["Have you set up a Special Needs Trust or looked into one?","Is there a named guardian if both of you can no longer care?","How much would lifelong care cost annually?","Do you have CI coverage to protect your ability to continue caregiving?","Have you spoken to a trust company or lawyer about estate planning?"],
-   objections:[{q:"Don't know where to start",a:"That's exactly what I'm here for. The first step is a whole life policy with your child as beneficiary through a trust — this is the foundation. Everything else builds on top of that. We can have that in place within a month."},
-     {q:"Too emotionally difficult to discuss",a:"I understand this is deeply personal. We don't need to make every decision today. Let's start with just one — the plan that ensures your child has financial continuity regardless of what happens to you. One policy. One decision. We can take the rest step by step."},
-     {q:"Not sure if a trust is affordable",a:"A Special Needs Trust can be funded with as little as S$100–200 per month through a whole life plan. The trust structure itself costs S$1,000–3,000 to set up with a lawyer — a one-time cost that protects your child's entire lifetime."}]}
-];
-
-const SERVICING_CALENDAR = [
-  {time:"Day 1–3",title:"Welcome & policy delivery",desc:"Send policy documents, confirm GIRO setup, explain 14-day free-look period. Introduce yourself as their go-to contact."},
-  {time:"Day 14",title:"Free-look check-in",desc:"Call or WhatsApp to confirm documents received, coverage understood, and no questions. Reinforce the decision made."},
-  {time:"Month 3",title:"Onboarding review",desc:"Confirm premiums deducting correctly, nominees updated, remaining gaps discussed. Log any life changes."},
-  {time:"Month 6",title:"Mid-year check",desc:"Review business or personal circumstances. Flag if income has grown and coverage is now under-indexed. Value-add touch."},
-  {time:"Month 12",title:"Annual review",desc:"Full portfolio review: income change, new liabilities, life events, sum assured adequacy, beneficiary update. Refreshed gap analysis."},
-  {time:"Ongoing",title:"Trigger-based reviews",desc:"Review immediately on: job change, marriage, new child, health diagnosis, property purchase, income jump >20%."}
-];
-
-const FOLLOWUP_TIMELINE = [
-  {time:"Week 1",label:"Same-week follow-up",color:"#EF4444",desc:"Brief, no-pressure message. Acknowledge hesitation, leave the door open. Send recommendation summary as PDF."},
-  {time:"Month 1",label:"Value-add touch",color:"#F59E0B",desc:"Share a relevant case study or story. No sales pitch. Be useful and educational."},
-  {time:"Month 2",label:"Reduced-scope proposal",color:"#3B82F6",desc:"If budget was the blocker, propose starting with just one plan — lowest premium, highest impact."},
-  {time:"Month 3",label:"Lifestyle check-in",color:"#10B981",desc:"Check in on their life — not on insurance. Show genuine interest outside a sales context."},
-  {time:"Month 6",label:"Mid-year re-proposal",color:"#8B5CF6",desc:"Circumstances may have changed. Re-present the plan with updated context and a fresh invitation."},
-  {time:"Month 9",label:"Birthday or festive touch",color:"#EC4899",desc:"Personal, non-transactional message. Keep the relationship alive with zero sales intent."},
-  {time:"Month 12",label:"Full year re-assessment",color:"#64748B",desc:"One year on — re-run the full needs analysis. Income, obligations, and circumstances will have evolved."}
+   questions:["What happens to your income if you're hospitalised for 2 weeks?","Do you have any insurance at all right now?","What is your average monthly net income?","Do you have 6 months emergency reserve?","Do you have business partners with shared liabilities?"]},
+  {id:5, icon:"🎓", name:"Fresh graduates", priority:"protection", color:"#8B5CF6", age:"22–26", income:"S$3–5k/mo",
+   profile:"Age 22–26, single, entry-level. Focus on low-cost protection and building habits.",
+   needs:["Hospitalisation & surgical","Personal accident","Early stage CI","Emergency fund setup"],
+   gaps:["No coverage beyond basic Medishield Life","No savings discipline"],
+   products:[{name:"Shield plan + rider",p:1},{name:"Basic CI",p:1},{name:"Personal accident",p:2}],
+   questions:["Have you upgraded your Medishield Life yet?","Do you have a personal accident plan?","How much are you saving per month?"]},
+  {id:6, icon:"🏘️", name:"HDB Upgraders", priority:"wealth", color:"#3B82F6", age:"35–45", income:"S$10–18k/mo",
+   profile:"Age 35–45, moving to condo. High mortgage debt, need for wealth protection.",
+   needs:["Mortgage protection","High sum assured life cover","Investment for wealth growth"],
+   gaps:["Mortgage under-covered","Minimal liquid investments"],
+   products:[{name:"Mortgage Reducing Term",p:1},{name:"ILP for growth",p:2}],
+   questions:["What is your new mortgage amount?","How much is your monthly repayment?"]},
+  {id:7, icon:"🏢", name:"SME Owners", priority:"legacy", color:"#EF4444", age:"40–60", income:"S$15–30k/mo",
+   profile:"Age 40–60, business owner. Business continuity and keyman risks.",
+   needs:["Keyman insurance","Buy-sell agreement funding","Legacy planning"],
+   gaps:["Business depends on owner solely","No estate plan"],
+   products:[{name:"Keyman Term Life",p:1},{name:"Whole Life for Legacy",p:2}],
+   questions:["What happens to the business if you can't work?","Do you have a business partner?"]},
+  {id:8, icon:"👰", name:"Newlyweds", priority:"protection", color:"#F59E0B", age:"25–35", income:"S$8–12k/mo",
+   profile:"Age 25–35, just married. Combined liabilities, planning for home and future.",
+   needs:["Joint life cover","Home protection","Savings for first home"],
+   gaps:["Single coverage only","No joint financial plan"],
+   products:[{name:"Term Life",p:1},{name:"Savings plan",p:2}],
+   questions:["Do you have a joint bank account?","What are your shared financial goals?"]},
+  {id:9, icon:"🩺", name:"Medical Professionals", priority:"medical", color:"#10B981", age:"30–50", income:"S$15–40k/mo",
+   profile:"Doctors/Dentists. High income, high stress, specific disability risks.",
+   needs:["Specialised disability income","High-limit CI","Professional indemnity (referral)"],
+   gaps:["Disability cover too low for lifestyle","High tax burden"],
+   products:[{name:"Disability Income",p:1},{name:"Endowment for tax relief",p:2}],
+   questions:["Can you work if you lose use of your hands?","Is your income protected against long-term illness?"]},
+  {id:10, icon:"👵", name:"Silver generation", priority:"legacy", color:"#94A3B8", age:"65+", income:"S$2–5k/mo",
+   profile:"Age 65+, retired. Wealth distribution and long-term care.",
+   needs:["CareShield Life supplement","Legacy planning","Medical cost management"],
+   gaps:["LTC cover insufficient","No will/LPA"],
+   products:[{name:"CareShield Supplement",p:1},{name:"Medical top-up",p:2}],
+   questions:["Who will manage your finances if you can't?","Is your medical plan still active?"]},
+  {id:11, icon:"👩‍💼", name:"Single Professionals", priority:"wealth", color:"#EC4899", age:"30–45", income:"S$6–12k/mo",
+   profile:"Independent, focus on wealth growth and self-reliance.",
+   needs:["Wealth accumulation","Critical illness","Retirement planning"],
+   gaps:["Over-reliance on cash","No long-term care plan"],
+   products:[{name:"ILP / Unit Trust",p:1},{name:"Multi-pay CI",p:2}],
+   questions:["What is your retirement 'number'?","How much of your income is invested?"]},
+  {id:12, icon:"🛳️", name:"Expatriates", priority:"medical", color:"#3B82F6", age:"30–50", income:"S$10–25k/mo",
+   profile:"Working in SG. Need portable, global coverage.",
+   needs:["International health insurance","Portable life cover","Global investment"],
+   gaps:["Coverage tied to SG only","No home-country protection"],
+   products:[{name:"Global Health Plan",p:1},{name:"Portable Term",p:2}],
+   questions:["Do you plan to stay in SG long-term?","Is your medical cover valid globally?"]},
+  {id:13, icon:"🚜", name:"Gig Workers", priority:"medical", color:"#F59E0B", age:"25–45", income:"S$2–6k/mo",
+   profile:"Freelancers. No benefits, high income volatility.",
+   needs:["Daily hospital cash","Basic medical","Personal accident"],
+   gaps:["Zero employer benefits","No sick leave pay"],
+   products:[{name:"Hospital Cash Plan",p:1},{name:"PA Plan",p:2}],
+   questions:["What happens if you can't drive/work for a week?","Do you have basic hospital cover?"]},
+  {id:14, icon:"🏠", name:"Empty Nesters", priority:"retirement", color:"#10B981", age:"55–65", income:"S$5–10k/mo",
+   profile:"Children grown. Focus on retirement and health.",
+   needs:["Retirement income","Medical upgrades","Legacy"],
+   gaps:["Life cover too high, retirement too low","Health renewal risks"],
+   products:[{name:"Annuity",p:1},{name:"Shield Plan",p:2}],
+   questions:["Have you reviewed your life cover recently?","Is your retirement income guaranteed?"]}
 ];
 
 // ═══════════════════════════════════════════════════════════
-// STATE
+// STATE MANAGEMENT
 // ═══════════════════════════════════════════════════════════
 const DEFAULT_STATE = {
-  selectedSeg: null,
+  activeCaseId: null, // If loading an existing case
+  selectedSegId: null, // Template ID
   meetingStep: 0,
   clientName: '',
   questionsChecked: {},
@@ -876,99 +500,25 @@ const DEFAULT_STATE = {
   gapsChecked: {},
   policiesChecked: {},
   contactLog: [],
-  selectedObjection: null,
-  customSegments: []
+  clientCases: [] // Array of saved client objects
 };
 
 let state = { ...DEFAULT_STATE };
 
-function getAllSegments() {
-  return [...SEGMENTS, ...state.customSegments];
-}
-
 function saveState() {
-  localStorage.setItem('finplan_ai_state', JSON.stringify(state));
+  localStorage.setItem('finplan_v2_state', JSON.stringify(state));
 }
 
 function loadState() {
-  const saved = localStorage.getItem('finplan_ai_state');
+  const saved = localStorage.getItem('finplan_v2_state');
   if (saved) {
     try {
       const loaded = JSON.parse(saved);
       state = { ...DEFAULT_STATE, ...loaded };
-      // Re-render based on loaded state
-      renderSegGrid();
-      if (state.selectedSeg !== null) {
-        selectSegment(state.selectedSeg);
-        if (state.meetingStep > 0) renderMeeting();
-        if (state.contactLog.length > 0) renderContactLog();
-      }
-    } catch (e) {
-      console.error('Failed to load state', e);
-      state = { ...DEFAULT_STATE };
-    }
+      renderClientFileList();
+      updateBadge();
+    } catch (e) { console.error(e); }
   }
-}
-
-function openCreateModal() {
-  document.getElementById('modal-create').classList.add('show');
-}
-
-function closeCreateModal() {
-  document.getElementById('modal-create').classList.remove('show');
-}
-
-function saveNewSegment() {
-  const name = document.getElementById('new-name').value;
-  const icon = document.getElementById('new-icon').value || '👤';
-  const priority = document.getElementById('new-priority').value;
-  const age = document.getElementById('new-age').value;
-  const income = document.getElementById('new-income').value;
-  const profile = document.getElementById('new-profile').value;
-  const needs = document.getElementById('new-needs').value.split('\n').filter(l => l.trim());
-  const questions = document.getElementById('new-questions').value.split('\n').filter(l => l.trim());
-
-  if (!name) { notify('Please enter a segment name'); return; }
-
-  const newSeg = {
-    id: Date.now(), // Unique ID
-    name, icon, priority, age, income, profile, needs, questions,
-    gaps: [], products: [], objections: [] // Simplified for now
-  };
-
-  state.customSegments.push(newSeg);
-  saveState();
-  renderSegGrid();
-  closeCreateModal();
-  notify('New segment created ✓');
-  
-  // Clear form
-  ['new-name','new-icon','new-age','new-income','new-profile','new-needs','new-questions'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
-}
-
-function deleteSegment(e, id) {
-  e.stopPropagation();
-  if (!confirm('Are you sure you want to delete this custom segment?')) return;
-  state.customSegments = state.customSegments.filter(s => s.id !== id);
-  if (state.selectedSeg === id) {
-    state.selectedSeg = null;
-    document.getElementById('seg-detail').style.display = 'none';
-  }
-  saveState();
-  renderSegGrid();
-  notify('Segment deleted');
-}
-
-// ═══════════════════════════════════════════════════════════
-// NAVIGATION
-// ═══════════════════════════════════════════════════════════
-function showPanel(id) {
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('panel-' + id).classList.add('active');
-  document.getElementById('nav-' + id).classList.add('active');
 }
 
 function notify(msg) {
@@ -979,436 +529,302 @@ function notify(msg) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// DASHBOARD
+// NAVIGATION
 // ═══════════════════════════════════════════════════════════
-function priorityTagClass(p) {
-  return {protection:'tag-blue',wealth:'tag-purple',retirement:'tag-amber',medical:'tag-green',legacy:'tag-red'}[p]||'tag-blue';
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  document.getElementById('nav-' + id).classList.add('active');
+  if (id === 'clientfiles') renderClientFileList();
 }
 
+// ═══════════════════════════════════════════════════════════
+// DASHBOARD & TEMPLATES
+// ═══════════════════════════════════════════════════════════
 function renderSegGrid(filter='all') {
   const grid = document.getElementById('seg-grid');
-  const all = getAllSegments();
-  const filtered = filter==='all' ? all : all.filter(s=>s.priority===filter);
+  const filtered = filter==='all' ? SEGMENTS : SEGMENTS.filter(s=>s.priority===filter);
   grid.innerHTML = filtered.map(s => `
-    <div class="seg-card ${state.selectedSeg===s.id?'selected':''}" onclick="selectSegment(${s.id})">
-      <div class="seg-actions">
-        ${s.id >= 1000 ? `<button class="btn btn-icon btn-danger" onclick="deleteSegment(event, ${s.id})">×</button>` : ''}
-      </div>
-      <div class="seg-icon" style="background:${s.color || '#334155'}22">${s.icon}</div>
+    <div class="seg-card ${state.selectedSegId===s.id?'selected':''}" onclick="selectSegment(${s.id})">
+      <div class="seg-icon" style="background:${s.color}22">${s.icon}</div>
       <div class="seg-name">${s.name}</div>
       <div class="seg-age">${s.age} · ${s.income}</div>
-      <div style="margin-top:8px"><span class="tag ${priorityTagClass(s.priority)}">${s.priority}</span></div>
+      <div style="margin-top:8px"><span class="tag" style="background:${s.color}22;color:${s.color}">${s.priority}</span></div>
     </div>`).join('');
 }
 
 function filterSegs(f) {
   ['all','protection','wealth','retirement','medical','legacy'].forEach(k => {
-    document.getElementById('f-'+k).className = 'btn btn-sm ' + (k===f ? 'btn-primary' : 'btn-ghost');
+    const el = document.getElementById('f-'+k);
+    if (el) el.className = 'btn btn-sm ' + (k===f ? 'btn-primary' : 'btn-ghost');
   });
   renderSegGrid(f);
 }
 
 function selectSegment(id) {
-  state.selectedSeg = id;
-  saveState();
-  const all = getAllSegments();
-  const seg = all.find(s => s.id === id);
-  if (!seg) return;
+  state.selectedSegId = id;
+  const seg = SEGMENTS[id];
   renderSegGrid();
   document.getElementById('seg-detail').style.display = 'block';
-
   document.getElementById('sd-icon').textContent = seg.icon;
   document.getElementById('sd-icon').style.background = seg.color + '22';
   document.getElementById('sd-name').textContent = seg.name;
   document.getElementById('sd-profile').textContent = seg.profile;
-  document.getElementById('sd-age').textContent = seg.age + ' years';
+  document.getElementById('sd-age').textContent = seg.age;
   document.getElementById('sd-income').textContent = seg.income;
-  document.getElementById('sd-priority').innerHTML = `<span class="tag ${priorityTagClass(seg.priority)}">${seg.priority}</span>`;
-
-  document.getElementById('sd-tags').innerHTML = seg.products.slice(0,3).map(p => `<span class="tag tag-teal">${p.name}</span>`).join('');
-  document.getElementById('sd-needs').innerHTML = seg.needs.map(n => `<span class="tag" style="background:rgba(255,255,255,.07);color:var(--white)">${n}</span>`).join('');
-  document.getElementById('sd-gaps').innerHTML = seg.gaps.map(g => `<div class="check-item"><div class="check-text">⚠ ${g}</div></div>`).join('');
-  document.getElementById('sd-objections').innerHTML = seg.objections.map(o => `<div class="check-item"><div class="check-text" style="font-style:italic;color:var(--muted)">"${o.q}"</div></div>`).join('');
-  document.getElementById('sd-products').innerHTML = seg.products.map((p,i) => `
-    <div class="policy-row">
-      <span class="priority-chip p${p.p}">P${p.p}</span>
-      <span style="font-size:13px;color:var(--white)">${p.name}</span>
-    </div>`).join('');
-  document.getElementById('sd-questions').innerHTML = seg.questions.map(q => `<div class="check-item"><div class="check-text">${q}</div></div>`).join('');
-
-  // Update sidebar
-  document.getElementById('sb-name').textContent = 'Viewing: ' + seg.name;
-  document.getElementById('sb-segment').textContent = seg.age + ' · ' + seg.priority;
-  document.getElementById('sb-avatar').textContent = seg.icon;
+  document.getElementById('sd-priority').innerHTML = `<span class="tag" style="background:${seg.color}22;color:${seg.color}">${seg.priority}</span>`;
 }
 
 function startMeeting() {
-  if (!state.selectedSeg && state.selectedSeg !== 0) { notify('Select a segment first'); return; }
+  // Reset active session for a new case
+  state.activeCaseId = null;
   state.meetingStep = 0;
+  state.clientName = '';
   state.questionsChecked = {};
   state.needsChecked = {};
   state.gapsChecked = {};
+  state.policiesChecked = {};
+  state.contactLog = [];
+  
   renderMeeting();
   showPanel('meeting');
 }
 
 // ═══════════════════════════════════════════════════════════
-// MEETING PLANNER
+// CLIENT CASE MANAGEMENT
+// ═══════════════════════════════════════════════════════════
+function saveCurrentCase() {
+  if (!state.clientName) {
+    state.clientName = document.getElementById('m-name').value;
+  }
+  if (!state.clientName) { notify('Please enter a client name'); return; }
+
+  const caseData = {
+    id: state.activeCaseId || Date.now(),
+    updatedAt: new Date().toISOString(),
+    segId: state.selectedSegId,
+    name: state.clientName,
+    meetingStep: state.meetingStep,
+    questionsChecked: state.questionsChecked,
+    needsChecked: state.needsChecked,
+    gapsChecked: state.gapsChecked,
+    policiesChecked: state.policiesChecked,
+    contactLog: state.contactLog
+  };
+
+  const idx = state.clientCases.findIndex(c => c.id === caseData.id);
+  if (idx > -1) state.clientCases[idx] = caseData;
+  else state.clientCases.unshift(caseData);
+
+  state.activeCaseId = caseData.id;
+  saveState();
+  updateBadge();
+  notify('Client case saved ✓');
+}
+
+function loadCase(id) {
+  const c = state.clientCases.find(x => x.id === id);
+  if (!c) return;
+
+  state.activeCaseId = c.id;
+  state.selectedSegId = c.segId;
+  state.clientName = c.name;
+  state.meetingStep = c.meetingStep;
+  state.questionsChecked = c.questionsChecked || {};
+  state.needsChecked = c.needsChecked || {};
+  state.gapsChecked = c.gapsChecked || {};
+  state.policiesChecked = c.policiesChecked || {};
+  state.contactLog = c.contactLog || [];
+
+  renderMeeting();
+  updateSidebar();
+  showPanel('meeting');
+  notify('Client file loaded');
+}
+
+function deleteCase(e, id) {
+  e.stopPropagation();
+  if (!confirm('Delete this client file?')) return;
+  state.clientCases = state.clientCases.filter(c => c.id !== id);
+  if (state.activeCaseId === id) {
+    state.activeCaseId = null;
+    showPanel('dashboard');
+  }
+  saveState();
+  renderClientFileList();
+  updateBadge();
+}
+
+function renderClientFileList() {
+  const list = document.getElementById('client-list');
+  const empty = document.getElementById('client-list-empty');
+  
+  if (state.clientCases.length === 0) {
+    list.style.display = 'none';
+    empty.style.display = 'block';
+    return;
+  }
+
+  list.style.display = 'block';
+  empty.style.display = 'none';
+  
+  list.innerHTML = state.clientCases.map(c => {
+    const seg = SEGMENTS[c.segId];
+    const date = new Date(c.updatedAt).toLocaleDateString();
+    return `
+      <div class="client-file-card" onclick="loadCase(${c.id})">
+        <div class="client-avatar" style="background:${seg.color}">${seg.icon}</div>
+        <div class="client-file-info">
+          <div class="client-file-name">${c.name}</div>
+          <div class="client-file-meta">${seg.name} • Last updated ${date}</div>
+        </div>
+        <button class="btn btn-sm btn-danger" onclick="deleteCase(event, ${c.id})">Delete</button>
+      </div>
+    `;
+  }).join('');
+}
+
+function updateBadge() {
+  document.getElementById('client-count-badge').textContent = state.clientCases.length;
+}
+
+// ═══════════════════════════════════════════════════════════
+// MEETING LOGIC
 // ═══════════════════════════════════════════════════════════
 function renderMeeting() {
-  const all = getAllSegments();
-  const seg = all.find(s => s.id === state.selectedSeg);
-  if (!seg) return;
+  const seg = SEGMENTS[state.selectedSegId];
   document.getElementById('meeting-no-client').style.display = 'none';
   document.getElementById('meeting-content').style.display = 'block';
-  document.getElementById('client-banner').style.display = 'flex';
-  document.getElementById('mb-segment').textContent = seg.name + ' · ' + seg.priority;
+  document.getElementById('mb-segment').textContent = seg.name;
+  document.getElementById('mb-name').textContent = state.clientName || 'New Client';
+  document.getElementById('m-name').value = state.clientName;
 
-  // Steps
+  const initials = (state.clientName || '?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById('mb-avatar').textContent = initials || seg.icon;
+
+  // Steps UI
   for (let i = 0; i < 5; i++) {
     const el = document.getElementById('ms'+i);
     el.classList.remove('active','done');
     if (i < state.meetingStep) el.classList.add('done');
     else if (i === state.meetingStep) el.classList.add('active');
+    document.getElementById('meeting-step-'+i).style.display = (i === state.meetingStep ? 'block' : 'none');
   }
   document.getElementById('mb-step-label').textContent = `Step ${state.meetingStep+1} of 5`;
 
-  // Show correct step
-  for (let i = 0; i < 5; i++) {
-    document.getElementById('meeting-step-'+i).style.display = i === state.meetingStep ? 'block' : 'none';
-  }
+  // Navigation buttons
+  document.getElementById('btn-next').style.display = state.meetingStep < 4 ? 'inline-flex' : 'none';
+  document.getElementById('btn-recommend').style.display = state.meetingStep === 4 ? 'inline-flex' : 'none';
 
   if (state.meetingStep === 1) renderDiscovery();
   if (state.meetingStep === 2) renderNeeds();
   if (state.meetingStep === 3) renderGapScore();
   if (state.meetingStep === 4) renderObjections();
+  
+  updateSidebar();
+}
+
+function meetingNext() {
+  if (state.meetingStep === 0) {
+    state.clientName = document.getElementById('m-name').value;
+    if (!state.clientName) { notify('Enter a name to continue'); return; }
+  }
+  if (state.meetingStep < 4) {
+    state.meetingStep++;
+    renderMeeting();
+    saveCurrentCase();
+  }
+}
+
+function meetingBack() {
+  if (state.meetingStep > 0) {
+    state.meetingStep--;
+    renderMeeting();
+  } else {
+    showPanel('dashboard');
+  }
 }
 
 function renderDiscovery() {
-  const all = getAllSegments();
-  const seg = all.find(s => s.id === state.selectedSeg);
+  const seg = SEGMENTS[state.selectedSegId];
   document.getElementById('m-questions').innerHTML = seg.questions.map((q,i) => `
     <div class="check-item">
       <input type="checkbox" ${state.questionsChecked[i]?'checked':''} onchange="toggleQ(${i})">
-      <div><div class="check-text">${q}</div><div class="check-sub">Tick when covered in conversation</div></div>
+      <div class="check-text">${q}</div>
     </div>`).join('');
 }
-
-function toggleQ(i) { state.questionsChecked[i] = !state.questionsChecked[i]; saveState(); }
+function toggleQ(i) { state.questionsChecked[i] = !state.questionsChecked[i]; saveCurrentCase(); }
 
 function renderNeeds() {
-  const all = getAllSegments();
-  const seg = all.find(s => s.id === state.selectedSeg);
+  const seg = SEGMENTS[state.selectedSegId];
   document.getElementById('m-needs').innerHTML = seg.needs.map((n,i) => `
     <div class="check-item">
       <input type="checkbox" ${state.needsChecked[i]?'checked':''} onchange="toggleNeed(${i})">
       <div class="check-text">${n}</div>
     </div>`).join('');
 }
-
-function toggleNeed(i) { state.needsChecked[i] = !state.needsChecked[i]; saveState(); }
+function toggleNeed(i) { state.needsChecked[i] = !state.needsChecked[i]; saveCurrentCase(); }
 
 function renderGapScore() {
-  const all = getAllSegments();
-  const seg = all.find(s => s.id === state.selectedSeg);
-  const total = seg.needs.length;
+  const seg = SEGMENTS[state.selectedSegId];
   const covered = Object.values(state.needsChecked).filter(Boolean).length;
-  const pct = Math.round((covered/total)*100);
-  const color = pct < 30 ? '#EF4444' : pct < 60 ? '#F59E0B' : '#10B981';
+  const pct = Math.round((covered / seg.needs.length) * 100);
   document.getElementById('m-score-val').textContent = pct + '%';
-  document.getElementById('m-score-val').style.color = color;
-  document.getElementById('m-score-bar').style.width = pct + '%';
-  document.getElementById('m-score-bar').style.background = color;
-  document.getElementById('m-score-sub').textContent = `${covered} of ${total} needs confirmed`;
-
-  document.getElementById('m-gaps').innerHTML = seg.gaps.map((g,i) => `
-    <div class="check-item">
-      <input type="checkbox" ${state.gapsChecked[i]?'checked':''} onchange="toggleGap(${i})">
-      <div class="check-text">${g}</div>
-    </div>`).join('');
-
-  const gapBars = [
-    {label:'Life coverage',pct:state.needsChecked[0]?80:10},
-    {label:'Critical illness',pct:state.needsChecked[1]||state.needsChecked[2]?60:5},
-    {label:'Medical / H&S',pct:state.needsChecked[3]?70:25},
-    {label:'Income protection',pct:state.needsChecked[4]?65:0},
-  ];
-  document.getElementById('m-gap-bars').innerHTML = gapBars.map(b => {
-    const c = b.pct < 30 ? '#EF4444' : b.pct < 60 ? '#F59E0B' : '#10B981';
-    return `<div class="gap-row">
-      <div class="gap-label"><span style="color:var(--white)">${b.label}</span><span style="color:${c};font-weight:600">${b.pct}%</span></div>
-      <div class="gap-track"><div class="gap-fill" style="width:${b.pct}%;background:${c}"></div></div>
-    </div>`;
-  }).join('');
+  document.getElementById('m-score-val').style.color = pct < 40 ? 'var(--red)' : pct < 70 ? 'var(--amber)' : 'var(--green)';
 }
-
-function toggleGap(i) { state.gapsChecked[i] = !state.gapsChecked[i]; }
 
 function renderObjections() {
-  const all = getAllSegments();
-  const seg = all.find(s => s.id === state.selectedSeg);
-  document.getElementById('m-objections').innerHTML = (seg.objections || []).map((o,i) => `
-    <div class="obj-card" id="obj-${i}" onclick="toggleObj(${i})">
+  const seg = SEGMENTS[state.selectedSegId];
+  document.getElementById('m-objections').innerHTML = (seg.objections || [
+    {q:"I need to think about it", a:"Of course. What specifically would you like to reflect on?"},
+    {q:"Is this the best price?", a:"We prioritize value and coverage stability. Let's compare the benefits."}
+  ]).map((o,i) => `
+    <div class="obj-card" onclick="this.classList.toggle('open')">
       <div class="obj-quote">"${o.q}"</div>
-      <div style="font-size:11px;color:var(--teal2);margin-bottom:6px">▶ Click to reveal response</div>
-      <div class="obj-response" style="padding-top:8px;border-top:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.8)">${o.a}</div>
+      <div class="obj-response">${o.a}</div>
     </div>`).join('');
-}
-
-function toggleObj(i) {
-  const el = document.getElementById('obj-'+i);
-  el.classList.toggle('open');
-}
-
-function meetingNext() {
-  if (state.meetingStep === 0) {
-    state.clientName = document.getElementById('m-name').value || 'Client';
-    document.getElementById('mb-name').textContent = state.clientName;
-    const initials = state.clientName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-    document.getElementById('mb-avatar').textContent = initials || '?';
-  }
-  if (state.meetingStep < 4) { state.meetingStep++; renderMeeting(); }
-  saveState();
-}
-
-function meetingBack() {
-  if (state.meetingStep > 0) { state.meetingStep--; renderMeeting(); }
-  saveState();
 }
 
 function buildRecommendation() {
-  if (!state.selectedSeg && state.selectedSeg !== 0) return;
   renderRecommendation();
   showPanel('recommendation');
+  saveCurrentCase();
 }
 
-// ═══════════════════════════════════════════════════════════
-// RECOMMENDATION
-// ═══════════════════════════════════════════════════════════
 function renderRecommendation() {
-  const all = getAllSegments();
-  const seg = all.find(s => s.id === state.selectedSeg);
-  const name = state.clientName || 'Client';
-  const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
-
+  const seg = SEGMENTS[state.selectedSegId];
   document.getElementById('rec-empty').style.display = 'none';
   document.getElementById('rec-content').style.display = 'block';
+  document.getElementById('rec-client-name').textContent = state.clientName;
+  document.getElementById('rec-client-detail').textContent = seg.name + ' • ' + seg.priority;
+  
+  const initials = (state.clientName || '?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
   document.getElementById('rec-avatar').textContent = initials;
-  document.getElementById('rec-client-name').textContent = name;
-  document.getElementById('rec-client-detail').textContent = seg.name + ' · ' + seg.age + ' · ' + seg.income;
 
-  const covered = Object.values(state.needsChecked).filter(Boolean).length;
-  const gapCount = Object.values(state.gapsChecked).filter(Boolean).length;
-  document.getElementById('rec-stats').innerHTML = [
-    {v: seg.name, l:'Client segment'},
-    {v: covered+'/'+seg.needs.length, l:'Needs confirmed'},
-    {v: gapCount+' gaps', l:'Coverage gaps found'},
-    {v: seg.products.length+' plans', l:'Recommended'},
-  ].map(s=>`<div class="stat"><div class="stat-val" style="font-size:16px">${s.v}</div><div class="stat-label">${s.l}</div></div>`).join('');
-
-  // Gap bars
-  const gapItems = [
-    {label:'Life / key-person cover', pct: covered>=1?35:5},
-    {label:'Critical illness', pct: covered>=2?0:0},
-    {label:'Disability / income continuity', pct:0},
-    {label:'Hospitalisation & surgical', pct: covered>=4?45:20},
-  ];
-  document.getElementById('rec-gaps').innerHTML = gapItems.map(g=>{
-    const covPct = Math.min(100, 100-g.pct);
-    const c = covPct < 30?'#EF4444':covPct<60?'#F59E0B':'#10B981';
-    return `<div class="gap-row">
-      <div class="gap-label"><span style="color:var(--white)">${g.label}</span><span style="color:${c};font-weight:600">${covPct}% covered</span></div>
-      <div class="gap-track"><div class="gap-fill" style="width:${covPct}%;background:${c}"></div></div>
-    </div>`;
-  }).join('');
-
-  document.getElementById('rec-existing-cover-label').textContent = 'Assessment of existing cover';
-  document.getElementById('rec-cover-good').textContent = 'Provides basic death/TPD protection. Keep in force — do not replace, only supplement.';
-  document.getElementById('rec-cover-bad').textContent = 'No CI, no disability income, no business-specific coverage. Under-insured relative to obligations.';
-
-  document.getElementById('rec-plan').innerHTML = (seg.products || []).map((p,i)=>`
+  document.getElementById('rec-plan').innerHTML = seg.products.map(p => `
     <div class="policy-row">
       <span class="priority-chip p${p.p}">P${p.p}</span>
-      <div class="policy-info">
-        <div class="policy-name">${p.name}</div>
-        <div class="policy-detail">${['AIA','Prudential','NTUC Income','Great Eastern','Manulife'][i%5]} · Singapore-regulated plan</div>
-      </div>
+      <div class="policy-info"><div class="policy-name">${p.name}</div></div>
     </div>`).join('');
 
-  const budgets = [{l:'Core protection plans',v:'S$200–400/mo'},{l:'Health & medical upgrade',v:'S$60–120/mo'},{l:'Savings / investment layer',v:'S$150–300/mo'}];
-  document.getElementById('rec-budget').innerHTML = budgets.map(b=>`
-    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05)">
-      <span style="font-size:13px;color:var(--muted)">${b.l}</span>
-      <span style="font-size:13px;font-weight:600;color:var(--white)">${b.v}</span>
-    </div>`).join('') +
-    `<div style="display:flex;justify-content:space-between;padding:10px 0;margin-top:4px;background:rgba(13,148,136,.1);border-radius:8px;padding:10px 12px;margin-top:8px">
-      <span style="font-size:13px;font-weight:600;color:var(--white)">Estimated total / month</span>
-      <span style="font-size:15px;font-weight:700;color:var(--teal2)">S$410–820</span>
-    </div>`;
-
-  document.getElementById('rec-next-steps').innerHTML = [
-    'Clarify outstanding business loans and personal guarantees signed',
-    'Confirm business structure — sole proprietor, partner, or director',
-    'Check if existing policy has a CI rider or is pure term',
-    'Submit disability income and CI illustrations for review',
-    'Refer to lawyer for will and LPA — critical for business owners'
-  ].map((s,i)=>`
-    <div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05)">
-      <span style="background:rgba(13,148,136,.2);color:var(--teal2);font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;flex-shrink:0;margin-top:1px">${i+1}</span>
-      <span style="font-size:13px;color:var(--white)">${s}</span>
-    </div>`).join('');
-
-  // Update sidebar
-  const all = getAllSegments();
-  const seg2 = all.find(s => s.id === state.selectedSeg);
-  document.getElementById('sb-name').textContent = name;
-  document.getElementById('sb-segment').textContent = seg2.name;
-  document.getElementById('sb-avatar').textContent = initials;
+  document.getElementById('rec-budget').innerHTML = `
+    <div style="padding:10px; background:rgba(255,255,255,0.05); border-radius:8px">
+      <div style="font-size:12px; color:var(--muted)">Estimated Monthly Premium</div>
+      <div style="font-size:20px; font-weight:700; color:var(--teal2); margin-top:4px">S$350 - S$600</div>
+    </div>
+  `;
 }
 
-// ═══════════════════════════════════════════════════════════
-// POLICY SERVICING
-// ═══════════════════════════════════════════════════════════
-function showServicing() {
-  if (state.selectedSeg === null) return;
-  const all = getAllSegments();
-  const seg = all.find(s => s.id === state.selectedSeg);
-  const name = state.clientName || 'Client';
-  const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
-
-  document.getElementById('srv-empty').style.display = 'none';
-  document.getElementById('srv-content').style.display = 'block';
-  document.getElementById('srv-avatar').textContent = initials;
-  document.getElementById('srv-name').textContent = name;
-  document.getElementById('srv-detail').textContent = seg.name + ' · Active client';
-
-  renderPolicies();
-
-  document.getElementById('srv-calendar').innerHTML = SERVICING_CALENDAR.map((c,i)=>`
-    <div class="tl-item">
-      <div class="tl-dot ${i<2?'active':''}"></div>
-      <div class="tl-title">${c.time} — ${c.title}</div>
-      <div class="tl-sub">${c.desc}</div>
-    </div>`).join('');
-
-  document.getElementById('srv-claims').innerHTML = [
-    'Policy numbers filed with client','Insurer hotlines saved in their phone',
-    'Nominee names updated and correct','Medical history declared accurately',
-    'Waiting periods communicated clearly','Beneficiary form submitted to insurer'
-  ].map(c=>`<div style="display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(255,255,255,.8)">
-    <span style="color:var(--green);font-size:14px">✓</span>${c}</div>`).join('');
-
-  const triggers = ['Business loan increased','New business partner','Income jump >20%','Marriage / divorce','New child','Health diagnosis','Property purchase','Business restructure'];
-  document.getElementById('srv-triggers').innerHTML = triggers.map(t=>`<span class="tag tag-amber">${t}</span>`).join('');
+function updateSidebar() {
+  if (state.selectedSegId !== null) {
+    const seg = SEGMENTS[state.selectedSegId];
+    document.getElementById('sb-name').textContent = state.clientName || 'Active Session';
+    document.getElementById('sb-segment').textContent = seg.name;
+    const initials = (state.clientName || '?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    document.getElementById('sb-avatar').textContent = initials || seg.icon;
+  }
 }
-
-function renderPolicies() {
-  if (state.selectedSeg === null) return;
-  const all = getAllSegments();
-  const seg = all.find(s => s.id === state.selectedSeg);
-  const placed = Object.values(state.policiesChecked).filter(Boolean).length;
-  document.getElementById('srv-active').textContent = placed;
-  document.getElementById('srv-gaps').textContent = (seg.products || []).length - placed;
-  document.getElementById('srv-gaps').style.color = ((seg.products || []).length-placed)>0?'var(--red)':'var(--green)';
-
-  document.getElementById('srv-policies').innerHTML = (seg.products || []).map((p,i)=>`
-    <div class="policy-row">
-      <div class="policy-check ${state.policiesChecked[i]?'done':''}" onclick="togglePolicy(${i})">${state.policiesChecked[i]?'✓':''}</div>
-      <div class="policy-info">
-        <div class="policy-name">${p.name}</div>
-        <div class="policy-detail">Priority ${p.p} · Click to mark as placed</div>
-      </div>
-      <span class="priority-chip p${p.p}">P${p.p}</span>
-    </div>`).join('');
-}
-
-function togglePolicy(i) {
-  state.policiesChecked[i] = !state.policiesChecked[i];
-  renderPolicies();
-  saveState();
-  notify(state.policiesChecked[i] ? 'Policy marked as placed ✓' : 'Policy unmarked');
-}
-
-// ═══════════════════════════════════════════════════════════
-// FOLLOW-UP
-// ═══════════════════════════════════════════════════════════
-function showFollowup() {
-  if (state.selectedSeg === null) return;
-  const all = getAllSegments();
-  const seg = all.find(s => s.id === state.selectedSeg);
-  const name = state.clientName || 'Client';
-  const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
-
-  document.getElementById('fu-empty').style.display = 'none';
-  document.getElementById('fu-content').style.display = 'block';
-  document.getElementById('fu-avatar').textContent = initials;
-  document.getElementById('fu-name').textContent = name + ' — ' + seg.name;
-
-  const objections = ['Budget constraints right now','Wants to think about it','Business not stable yet','Spouse needs to be consulted','Doesn\'t see urgency','Comparing with other advisors'];
-  document.getElementById('fu-objs').innerHTML = objections.map(o=>`
-    <button class="btn btn-sm btn-ghost" onclick="selectObjBtn(this,'${o}')">${o}</button>`).join('');
-
-  document.getElementById('fu-timeline').innerHTML = FOLLOWUP_TIMELINE.map(t=>`
-    <div class="tl-item">
-      <div class="tl-dot" style="border-color:${t.color};background:${t.color}22"></div>
-      <div class="tl-title" style="color:${t.color}">${t.time} — ${t.label}</div>
-      <div class="tl-sub">${t.desc}</div>
-    </div>`).join('');
-
-  document.getElementById('fu-biz-triggers').innerHTML = ['Takes a business loan','Hires first employee','Brings in a business partner','Business income grows sharply','Mentions a competitor got ill'].map(t=>`
-    <div style="font-size:12px;color:rgba(252,165,165,.8);display:flex;gap:6px;align-items:center">
-      <span style="color:var(--red)">→</span>${t}</div>`).join('');
-
-  document.getElementById('fu-personal-triggers').innerHTML = ['Gets married','Expecting a child','Family member gets seriously ill','Reaches a milestone age','Mentions financial stress'].map(t=>`
-    <div style="font-size:12px;color:rgba(252,211,77,.8);display:flex;gap:6px;align-items:center">
-      <span style="color:var(--amber)">→</span>${t}</div>`).join('');
-}
-
-function selectObjBtn(btn, val) {
-  document.querySelectorAll('#fu-objs .btn').forEach(b => b.className = 'btn btn-sm btn-ghost');
-  btn.className = 'btn btn-sm btn-primary';
-  state.selectedObjection = val;
-  saveState();
-}
-
-function logContact() {
-  const date = document.getElementById('fu-date').value;
-  const channel = document.getElementById('fu-channel').value;
-  const outcome = document.getElementById('fu-outcome').value;
-  const notes = document.getElementById('fu-notes').value;
-  if (!date) { notify('Please select a date'); return; }
-  state.contactLog.unshift({date, channel, outcome, notes});
-  renderContactLog();
-  saveState();
-  document.getElementById('fu-notes').value = '';
-  notify('Contact logged ✓');
-}
-
-function renderContactLog() {
-  document.getElementById('fu-log').innerHTML = state.contactLog.map(c=>{
-    const good = c.outcome.includes('Interested')||c.outcome.includes('Ready');
-    const bg = good?'rgba(16,185,129,.1)':'rgba(255,255,255,.04)';
-    const bc = good?'rgba(16,185,129,.3)':'var(--border)';
-    const tc = good?'var(--green)':'var(--muted)';
-    return `<div style="background:${bg};border:1px solid ${bc};border-radius:8px;padding:10px 12px;margin-bottom:6px">
-      <div style="display:flex;justify-content:space-between;margin-bottom:2px">
-        <span style="font-size:12px;font-weight:600;color:${tc}">${c.date} · ${c.channel}</span>
-        <span style="font-size:11px;color:var(--muted)">${c.outcome}</span>
-      </div>
-      ${c.notes?`<div style="font-size:12px;color:var(--muted)">${c.notes}</div>`:''}
-    </div>`;
-  }).join('');
-}
-
-// ═══════════════════════════════════════════════════════════
-// INTERCEPT panel navigation to show loaded content
-// ═══════════════════════════════════════════════════════════
-const origShowPanel = showPanel;
-window.showPanel = function(id) {
-  origShowPanel(id);
-  if (id === 'servicing') showServicing();
-  if (id === 'followup') showFollowup();
-};
 
 // ═══════════════════════════════════════════════════════════
 // INIT
