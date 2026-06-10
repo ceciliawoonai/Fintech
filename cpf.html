@@ -828,8 +828,8 @@ function updateAllocationRates() {
     removeRetirementAccountFields();
   }
 
-  // Auto-calculate when age changes
-  calculateCPF();
+  // Note: Auto-calculation removed to prevent infinite loops
+  // User must click "Calculate CPF" button explicitly
 }
 
 // Add RA balance field for ages 55+
