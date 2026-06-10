@@ -854,6 +854,440 @@ function removeRetirementAccountFields() {
   }
 }
 
+// CPF Calculation Functions (Based on Excel Logic)
+function calculateCPF() {
+  // Get input values
+  const age = parseInt(document.getElementById('age').value);
+  const salary = parseFloat(document.getElementById('salary').value);
+  const contributionRate = parseFloat(document.getElementById('contribution-rate').value);
+
+  const oaPercent = parseFloat(document.getElementById('oa-percent').value);
+  const saPercent = parseFloat(document.getElementById('sa-percent').value);
+  const maPercent = parseFloat(document.getElementById('ma-percent').value);
+
+  const oaBalance = parseFloat(document.getElementById('oa-balance').value);
+  const saBalance = parseFloat(document.getElementById('sa-balance').value);
+  const maBalance = parseFloat(document.getElementById('ma-balance').value);
+  const raBalance = parseFloat(document.getElementById('ra-balance')?.value || 0);
+
+  // Get AWS+Bonus information
+  const awsBonus = parseFloat(document.getElementById('aws-bonus')?.value || 0);
+  const bonusMonths = parseInt(document.getElementById('bonus-months')?.value || 1);
+
+  // Calculate annual gross wage and additional wage components
+  const annualSalary = salary * 12;
+  const annualBonus = awsBonus * bonusMonths;
+  const grossAnnualWage = annualSalary + annualBonus;
+
+  // Calculate monthly contributions (Excel formula logic)
+  const totalContribution = salary * contributionRate;
+  let oaContribution = totalContribution * (oaPercent / 100);
+  let saContribution = totalContribution * (saPercent / 100);
+  const maContribution = totalContribution * (maPercent / 100);
+
+  // Calculate employee and employer contributions (assuming standard split)
+  const employeeContributionRate = age <= 55 ? 0.2 : (age <= 60 ? 0.17 : (age <= 65 ? 0.115 : (age <= 70 ? 0.075 : 0.05)));
+  const employerContributionRate = contributionRate - employeeContributionRate;
+
+  const employeeContribution = salary * employeeContributionRate;
+  const employerContribution = salary * employerContributionRate;
+
+  // Apply 2026 FRS Exception Rule for ages 55+
+  let frsExceptionApplied = false;
+  if (age >= 55 && raBalance >= FRS_2026) {
+    // If RA has reached FRS, channel all RA contributions to OA
+    oaContribution += saContribution;
+    saContribution = 0;
+    frsExceptionApplied = true;
+  }
+
+  // Project balances with correct interest rates (4.0% for SA/RA, 2.5% for OA, 4.0% for MA)
+  const saRaGrowth = 1.04;  // 4.0% for SA and RA
+  const oaGrowth = 1.025;    // 2.5% for OA
+  const maGrowth = 1.04;     // 4.0% for MA
+  const yearsToRetirement = 65 - age;
+
+  // Future Value of Annuity Due formula for contributions
+  const saAnnuityFactor = (Math.pow(saRaGrowth, yearsToRetirement) - 1) / (saRaGrowth - 1) * saRaGrowth;
+  const oaAnnuityFactor = (Math.pow(oaGrowth, yearsToRetirement) - 1) / (oaGrowth - 1) * oaGrowth;
+  const maAnnuityFactor = (Math.pow(maGrowth, yearsToRetirement) - 1) / (maGrowth - 1) * maGrowth;
+
+  // Compound current balances AND future contributions with correct rates
+  const projectedOa = (oaBalance * Math.pow(oaGrowth, yearsToRetirement)) + (oaContribution * 12 * oaAnnuityFactor);
+  const projectedSa = (saBalance * Math.pow(saRaGrowth, yearsToRetirement)) + (saContribution * 12 * saAnnuityFactor);
+  const projectedMa = (maBalance * Math.pow(maGrowth, yearsToRetirement)) + (maContribution * 12 * maAnnuityFactor);
+  const projectedRa = Math.min((raBalance * Math.pow(saRaGrowth, yearsToRetirement)) + (saContribution * 12 * saAnnuityFactor), FRS_2026);
+
+  // Display results based on age
+  const results = [];
+
+  // Add wage and contribution summary for all ages with better visual distinction
+  results.push(
+    { label: 'Gross Annual Wage', value: grossAnnualWage.toFixed(0), unit: '', class: 'wage' },
+    { label: 'Annual Salary', value: annualSalary.toFixed(0), unit: '', class: 'wage' },
+    { label: 'Annual Bonus', value: annualBonus.toFixed(0), unit: '', class: 'wage' },
+    { label: 'Employee Contribution', value: employeeContribution.toFixed(2), unit: '', class: 'contribution' },
+    { label: 'Employer Contribution', value: employerContribution.toFixed(2), unit: '', class: 'contribution' },
+    { label: 'Total Monthly Contribution', value: totalContribution.toFixed(2), unit: '', class: 'contribution' }
+  );
+
+  if (age >= 55) {
+    // For ages 55+, show RA instead of SA (SA is closed at 55)
+    results.push(
+      { label: 'OA Contribution', value: oaContribution.toFixed(2), unit: '', class: 'contribution' },
+      { label: 'RA Contribution', value: saContribution.toFixed(2), unit: '', class: 'contribution' },
+      { label: 'MA Contribution', value: maContribution.toFixed(2), unit: '', class: 'contribution' },
+      { label: 'Projected OA at 65', value: projectedOa.toFixed(0), unit: '', class: 'projection' },
+      { label: 'Projected RA at 65', value: projectedRa.toFixed(0), unit: '', class: 'projection' },
+      { label: 'Projected MA at 65', value: projectedMa.toFixed(0), unit: '', class: 'projection' },
+      { label: 'Total CPF at 65', value: (projectedOa + projectedRa + projectedMa).toFixed(0), unit: '', class: 'summary' }
+    );
+
+    // Add FRS status information
+    const frsStatus = raBalance >= FRS_2026 ? 'REACHED' : 'NOT REACHED';
+    const frsProgress = ((raBalance / FRS_2026) * 100).toFixed(1) + '%';
+    results.push(
+      { label: 'FRS Status', value: frsStatus, unit: '', class: 'summary' },
+      { label: 'FRS Progress', value: frsProgress, unit: '', class: 'summary' },
+      { label: 'FRS Exception Applied', value: frsExceptionApplied ? 'YES' : 'NO', unit: '', class: 'summary' }
+    );
+  } else {
+    // For ages < 55, show standard SA (but also show what happens at 55+)
+    results.push(
+      { label: 'OA Contribution', value: oaContribution.toFixed(2), unit: '', class: 'contribution' },
+      { label: 'SA Contribution', value: saContribution.toFixed(2), unit: '', class: 'contribution' },
+      { label: 'MA Contribution', value: maContribution.toFixed(2), unit: '', class: 'contribution' },
+      { label: 'Projected OA at 54', value: projectedOa.toFixed(0), unit: '', class: 'projection' },
+      { label: 'Projected SA at 54', value: projectedSa.toFixed(0), unit: '', class: 'projection' },
+      { label: 'Projected MA at 54', value: projectedMa.toFixed(0), unit: '', class: 'projection' },
+      { label: 'Total CPF at 54', value: (projectedOa + projectedSa + projectedMa).toFixed(0), unit: '', class: 'summary' }
+    );
+
+    // Show projected values at 65 (after SA->RA conversion)
+    const yearsFrom55To65 = 10;
+    const saToRaConversion = projectedSa; // SA balance at 55 gets converted to RA
+    const raAt65 = (saToRaConversion * Math.pow(annualGrowth, yearsFrom55To65)) + (saContribution * 12 * ((Math.pow(annualGrowth, yearsFrom55To65) - 1) / (annualGrowth - 1) * annualGrowth));
+    const oaAt65 = projectedOa * Math.pow(annualGrowth, yearsFrom55To65);
+    const maAt65 = projectedMa * Math.pow(annualGrowth, yearsFrom55To65);
+
+    results.push(
+      { label: 'Projected OA at 65', value: oaAt65.toFixed(0), unit: '', class: 'projection' },
+      { label: 'Projected RA at 65', value: raAt65.toFixed(0), unit: '', class: 'projection' },
+      { label: 'Projected MA at 65', value: maAt65.toFixed(0), unit: '', class: 'projection' },
+      { label: 'Total CPF at 65', value: (oaAt65 + raAt65 + maAt65).toFixed(0), unit: '', class: 'summary' }
+    );
+  }
+
+  displayResults(results, 'results-grid');
+  document.getElementById('cpf-results').style.display = 'block';
+
+  // Show appropriate notification
+  if (age >= 55 && frsExceptionApplied) {
+    notify('FRS reached! Excess contributions channeled to OA.');
+    document.getElementById('frs-status-indicator').style.display = 'block';
+  } else if (age >= 55) {
+    notify('CPF calculation completed with RA allocation.');
+    document.getElementById('frs-status-indicator').style.display = 'none';
+  } else {
+    notify('CPF calculation completed!');
+    document.getElementById('frs-status-indicator').style.display = 'none';
+  }
+}
+
+// Retirement Projection Functions (Excel-based logic)
+function calculateRetirement() {
+  const retirementAge = parseInt(document.getElementById('retirement-age').value);
+  const lifeExpectancy = parseInt(document.getElementById('life-expectancy').value);
+  const returnRate = parseFloat(document.getElementById('return-rate').value) / 100;
+  const desiredPayout = parseFloat(document.getElementById('desired-payout').value);
+  const cpfLifePlan = document.getElementById('cpf-life-plan').value;
+
+  // Get current CPF balances
+  const oaBalance = parseFloat(document.getElementById('oa-balance').value);
+  const saBalance = parseFloat(document.getElementById('sa-balance').value);
+  const maBalance = parseFloat(document.getElementById('ma-balance').value);
+  const totalCpf = oaBalance + saBalance + maBalance;
+
+  // Calculate retirement period
+  const retirementYears = lifeExpectancy - retirementAge;
+
+  // Future Value calculation (similar to Excel FV function)
+  const fvFactor = Math.pow(1 + returnRate, retirementYears);
+  const retirementSum = totalCpf * fvFactor;
+
+  // CPF Life payout calculation (based on Excel formulas)
+  let monthlyPayout = 0;
+  if (cpfLifePlan === 'standard') {
+    monthlyPayout = retirementSum / (retirementYears * 12 * 1.1); // Standard plan factor
+  } else if (cpfLifePlan === 'basic') {
+    monthlyPayout = retirementSum / (retirementYears * 12 * 1.2); // Basic plan factor
+  } else {
+    // Escalating plan with 2% annual increase
+    monthlyPayout = desiredPayout;
+  }
+
+  // Display results
+  const results = [
+    { label: 'Retirement Sum', value: retirementSum.toFixed(0), unit: '' },
+    { label: 'Retirement Period', value: retirementYears, unit: 'years' },
+    { label: 'Projected Payout', value: monthlyPayout.toFixed(0), unit: '/month' },
+    { label: 'Total Payouts', value: (monthlyPayout * 12 * retirementYears).toFixed(0), unit: '' },
+    { label: 'Shortfall/Gap', value: (desiredPayout - monthlyPayout).toFixed(0), unit: '' }
+  ];
+
+  displayResults(results, 'retirement-grid');
+  document.getElementById('retirement-results').style.display = 'block';
+  notify('Retirement projection completed!');
+}
+
+// Helper functions
+function displayResults(results, gridId) {
+  const grid = document.getElementById(gridId);
+
+  // Map results to HTML with proper CSS classes
+  grid.innerHTML = results.map(r => {
+    const cardClass = getCardClass(r.class);
+    const labelClass = getLabelClass(r.class);
+    const valueClass = getValueClass(r.class);
+
+    return `
+      <div class="result-card ${cardClass}">
+        <div class="result-label ${labelClass}">${r.label}</div>
+        <div style="display:flex;align-items:baseline;gap:4px">
+          <div class="result-value ${valueClass}">S$${r.value}</div>
+          <div class="result-unit">${r.unit}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Add Retirement Sum Progress Visualization for ALL ages
+  if (gridId === 'results-grid') {
+    const age = parseInt(document.getElementById('age').value);
+    const totalCpfAt65 = age >= 55 ?
+      parseFloat(results.find(r => r.label === 'Total CPF at 65')?.value.replace(/,/g, '') || 0) :
+      parseFloat(results.find(r => r.label === 'Total CPF at 65')?.value.replace(/,/g, '') || 0);
+
+    // Calculate progress towards each retirement sum
+    const brsProgress = Math.min((totalCpfAt65 / BRS_2026) * 100, 100);
+    const frsProgress = Math.min((totalCpfAt65 / FRS_2026) * 100, 100);
+    const ersProgress = Math.min((totalCpfAt65 / ERS_2026) * 100, 100);
+
+    // Determine which account to use for projection
+    const accountType = age >= 55 ? 'RA' : 'SA/RA';
+    const projectedValue = age >= 55 ?
+      results.find(r => r.label === 'Projected RA at 65')?.value || '0' :
+      results.find(r => r.label === 'Projected SA at 65')?.value || '0';
+
+    // Create progress visualization
+    const progressHTML = `
+      <div class="result-card result-card-highlight" style="grid-column: 1 / -1;">
+        <div class="result-label result-label-highlight">🎯 Retirement Sum Progress (Projected at 65)</div>
+        <div style="margin-top: 8px;">
+          <div class="sum-progress-label">
+            <span class="sum-progress-current">S$${projectedValue} / </span>
+            <span>BRS (S$${BRS_2026.toLocaleString()})</span>
+            <span class="sum-progress-value">${brsProgress.toFixed(1)}%</span>
+          </div>
+          <div class="sum-progress">
+            <div class="sum-progress-fill sum-progress-brs" style="width: ${brsProgress}%"></div>
+          </div>
+        </div>
+        <div style="margin-top: 12px;">
+          <div class="sum-progress-label">
+            <span class="sum-progress-current">S$${projectedValue} / </span>
+            <span>FRS (S$${FRS_2026.toLocaleString()})</span>
+            <span class="sum-progress-value">${frsProgress.toFixed(1)}%</span>
+          </div>
+          <div class="sum-progress">
+            <div class="sum-progress-fill sum-progress-frs" style="width: ${frsProgress}%"></div>
+          </div>
+        </div>
+        <div style="margin-top: 12px;">
+          <div class="sum-progress-label">
+            <span class="sum-progress-current">S$${projectedValue} / </span>
+            <span>ERS (S$${ERS_2026.toLocaleString()})</span>
+            <span class="sum-progress-value">${ersProgress.toFixed(1)}%</span>
+          </div>
+          <div class="sum-progress">
+            <div class="sum-progress-fill sum-progress-ers" style="width: ${ersProgress}%"></div>
+          </div>
+        </div>
+        <div style="margin-top: 12px;padding:8px;background:rgba(255,255,255,.04);border-radius:6px;font-size:11px;">
+          <strong>Status:</strong>
+          ${totalCpfAt65 >= ERS_2026 ? '🏆 ERS Achieved' :
+            totalCpfAt65 >= FRS_2026 ? '🎯 FRS Achieved' :
+            totalCpfAt65 >= BRS_2026 ? '⚠️ BRS Achieved' : '❌ Below BRS'}
+          ${totalCpfAt65 >= ERS_2026 ? '' :
+            ` | Shortfall: S$${(ERS_2026 - totalCpfAt65).toLocaleString()} to ERS`}
+        </div>
+      </div>
+    `;
+
+    grid.insertAdjacentHTML('beforeend', progressHTML);
+  }
+}
+
+// Helper functions for CSS classes
+function getCardClass(type) {
+  switch(type) {
+    case 'wage': return 'result-card-wage';
+    case 'contribution': return 'result-card-contribution';
+    case 'projection': return 'result-card-projection';
+    case 'summary': return 'result-card-summary';
+    case 'highlight': return 'result-card-highlight';
+    default: return '';
+  }
+}
+
+function getLabelClass(type) {
+  switch(type) {
+    case 'wage': return 'result-label-wage';
+    case 'contribution': return 'result-label-contribution';
+    case 'projection': return 'result-label-projection';
+    case 'summary': return 'result-label-summary';
+    case 'highlight': return 'result-label-highlight';
+    default: return '';
+  }
+}
+
+function getValueClass(type) {
+  switch(type) {
+    case 'wage': return 'result-value-wage';
+    case 'contribution': return 'result-value-contribution';
+    case 'projection': return 'result-value-projection';
+    case 'summary': return 'result-value-summary';
+    case 'highlight': return 'result-value-highlight';
+    default: return '';
+  }
+}
+
+function updateSliderValue() {
+  const slider = document.getElementById('payout-slider');
+  const value = document.getElementById('slider-value');
+  const input = document.getElementById('desired-payout');
+  const val = slider.value;
+  value.textContent = `S$${val}`;
+  input.value = val;
+}
+
+// Navigation
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  document.getElementById('nav-' + id).classList.add('active');
+}
+
+function notify(msg) {
+  const n = document.getElementById('notif');
+  n.textContent = msg;
+  n.classList.add('show');
+  setTimeout(() => n.classList.remove('show'), 2500);
+}
+
+// CPF Allocation Rates based on Age (2026 rules)
+const CPF_ALLOCATION_RATES = {
+  // Age: [OA%, SA%, MA%, strategy, contributionRate]
+  20: [62.17, 16.21, 21.62, "🏠 Maximizing housing runway", 0.37],
+  25: [62.17, 16.21, 21.62, "🏠 Maximizing housing runway", 0.37],
+  30: [62.17, 16.21, 21.62, "🏠 Maximizing housing runway", 0.37],
+  35: [62.17, 16.21, 21.62, "🏠 Maximizing housing runway", 0.37],
+  40: [56.77, 18.91, 24.32, "📉 OA drops; SA/MA start to climb", 0.37],
+  45: [51.36, 21.62, 27.02, "⚖️ Balanced accumulation phase", 0.37],
+  50: [40.55, 31.08, 28.37, "🛡️ Aggressive retirement build-up", 0.37],
+  55: [12.0, 0, 10.5, "🔒 SA closed, RA created", 0.34],
+  60: [3.5, 0, 10.5, "🎯 Retirement focus", 0.25],
+  65: [1.0, 0, 10.5, "👵 Reduced contributions", 0.165],
+  70: [1.0, 0, 10.5, "🦽 Minimum contributions", 0.125]
+};
+
+// Retirement Account allocation rates for ages 55+
+const RA_ALLOCATION_RATES = {
+  55: 11.5,
+  60: 11.0,
+  65: 5.0,
+  70: 1.0
+};
+
+// Retirement Sums (2026)
+const BRS_2026 = 102900;  // Basic Retirement Sum
+const FRS_2026 = 205800;  // Full Retirement Sum
+const ERS_2026 = 308700;  // Enhanced Retirement Sum
+
+// Auto-update allocation rates based on age
+function updateAllocationRates() {
+  const ageInput = document.getElementById('age');
+  const age = parseInt(ageInput.value);
+
+  // Find the closest age bracket
+  let closestAge = 35;
+  const ages = Object.keys(CPF_ALLOCATION_RATES).map(Number);
+
+  for (let i = 0; i < ages.length; i++) {
+    if (age <= ages[i]) {
+      closestAge = ages[i];
+      break;
+    }
+  }
+
+  const rates = CPF_ALLOCATION_RATES[closestAge];
+  document.getElementById('oa-percent').value = rates[0];
+  document.getElementById('sa-percent').value = rates[1];
+  document.getElementById('ma-percent').value = rates[2];
+
+  // Update strategy label
+  document.getElementById('strategy-label').textContent = rates[3];
+
+  // Update contribution rate dropdown
+  document.getElementById('contribution-rate').value = rates[4];
+
+  // Handle age 55+ logic (SA -> RA transition)
+  if (age >= 55) {
+    // Hide SA input, show RA input
+    document.getElementById('sa-label').textContent = 'Retirement Account (%)';
+    document.getElementById('sa-percent').value = RA_ALLOCATION_RATES[closestAge] || 0;
+
+    // Hide SA balance field for ages 55+
+    document.getElementById('sa-balance-group').style.display = 'none';
+
+    // Add RA balance input if not exists
+    if (!document.getElementById('ra-balance')) {
+      addRetirementAccountFields();
+    }
+  } else {
+    // Show SA input
+    document.getElementById('sa-label').textContent = 'Special Account (%)';
+    document.getElementById('sa-balance-group').style.display = 'block';
+    removeRetirementAccountFields();
+  }
+
+  // Auto-calculate when age changes
+  calculateCPF();
+}
+
+// Add RA balance field for ages 55+
+function addRetirementAccountFields() {
+  const balancesGrid = document.querySelector('#panel-calculator .cpf-section:nth-child(3) .grid-3');
+  if (!document.getElementById('ra-balance')) {
+    const raField = document.createElement('div');
+    raField.className = 'form-group';
+    raField.innerHTML = `
+      <label class="form-label">RA Balance (S$)</label>
+      <input type="number" id="ra-balance" class="form-input" value="0" min="0">
+    `;
+    balancesGrid.appendChild(raField);
+  }
+}
+
+// Remove RA balance field for ages < 55
+function removeRetirementAccountFields() {
+  const raField = document.getElementById('ra-balance');
+  if (raField && raField.parentElement) {
+    raField.parentElement.remove();
+  }
+}
+
 // Validate that allocation percentages add up to 100%
 function validateAllocation() {
   const oa = parseFloat(document.getElementById('oa-percent').value) || 0;
@@ -869,40 +1303,6 @@ function validateAllocation() {
     document.getElementById('oa-percent').style.borderColor = 'var(--border)';
     document.getElementById('sa-percent').style.borderColor = 'var(--border)';
     document.getElementById('ma-percent').style.borderColor = 'var(--border)';
-  }
-}
-
-// Mobile menu toggle function
-function toggleMobileMenu() {
-  const sidebar = document.getElementById('sidebar');
-  const overlay = document.querySelector('.mobile-overlay');
-  const body = document.body;
-
-  sidebar.classList.toggle('show');
-  overlay.classList.toggle('show');
-
-  // Prevent scrolling when menu is open
-  if (sidebar.classList.contains('show')) {
-    body.style.overflow = 'hidden';
-  } else {
-    body.style.overflow = '';
-  }
-}
-
-// Mobile menu toggle function
-function toggleMobileMenu() {
-  const sidebar = document.getElementById('sidebar');
-  const overlay = document.querySelector('.mobile-overlay');
-  const body = document.body;
-
-  sidebar.classList.toggle('show');
-  overlay.classList.toggle('show');
-
-  // Prevent scrolling when menu is open
-  if (sidebar.classList.contains('show')) {
-    body.style.overflow = 'hidden';
-  } else {
-    body.style.overflow = '';
   }
 }
 
