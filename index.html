@@ -793,7 +793,7 @@ const FOLLOWUP_TIMELINE = [
 // ═══════════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════════
-let state = {
+const DEFAULT_STATE = {
   selectedSeg: null,
   meetingStep: 0,
   clientName: '',
@@ -804,6 +804,30 @@ let state = {
   contactLog: [],
   selectedObjection: null
 };
+
+let state = { ...DEFAULT_STATE };
+
+function saveState() {
+  localStorage.setItem('finplan_ai_state', JSON.stringify(state));
+}
+
+function loadState() {
+  const saved = localStorage.getItem('finplan_ai_state');
+  if (saved) {
+    try {
+      state = JSON.parse(saved);
+      // Re-render based on loaded state
+      if (state.selectedSeg !== null) {
+        selectSegment(state.selectedSeg);
+        if (state.meetingStep > 0) renderMeeting();
+        if (state.contactLog.length > 0) renderContactLog();
+      }
+    } catch (e) {
+      console.error('Failed to load state', e);
+      state = { ...DEFAULT_STATE };
+    }
+  }
+}
 
 // ═══════════════════════════════════════════════════════════
 // NAVIGATION
@@ -850,6 +874,7 @@ function filterSegs(f) {
 
 function selectSegment(id) {
   state.selectedSeg = id;
+  saveState();
   const seg = SEGMENTS[id];
   renderSegGrid();
   document.getElementById('seg-detail').style.display = 'block';
@@ -928,7 +953,7 @@ function renderDiscovery() {
     </div>`).join('');
 }
 
-function toggleQ(i) { state.questionsChecked[i] = !state.questionsChecked[i]; }
+function toggleQ(i) { state.questionsChecked[i] = !state.questionsChecked[i]; saveState(); }
 
 function renderNeeds() {
   const seg = SEGMENTS[state.selectedSeg];
@@ -939,7 +964,7 @@ function renderNeeds() {
     </div>`).join('');
 }
 
-function toggleNeed(i) { state.needsChecked[i] = !state.needsChecked[i]; }
+function toggleNeed(i) { state.needsChecked[i] = !state.needsChecked[i]; saveState(); }
 
 function renderGapScore() {
   const seg = SEGMENTS[state.selectedSeg];
@@ -999,10 +1024,12 @@ function meetingNext() {
     document.getElementById('mb-avatar').textContent = initials || '?';
   }
   if (state.meetingStep < 4) { state.meetingStep++; renderMeeting(); }
+  saveState();
 }
 
 function meetingBack() {
   if (state.meetingStep > 0) { state.meetingStep--; renderMeeting(); }
+  saveState();
 }
 
 function buildRecommendation() {
@@ -1150,6 +1177,7 @@ function renderPolicies() {
 function togglePolicy(i) {
   state.policiesChecked[i] = !state.policiesChecked[i];
   renderPolicies();
+  saveState();
   notify(state.policiesChecked[i] ? 'Policy marked as placed ✓' : 'Policy unmarked');
 }
 
@@ -1191,6 +1219,7 @@ function selectObjBtn(btn, val) {
   document.querySelectorAll('#fu-objs .btn').forEach(b => b.className = 'btn btn-sm btn-ghost');
   btn.className = 'btn btn-sm btn-primary';
   state.selectedObjection = val;
+  saveState();
 }
 
 function logContact() {
@@ -1201,6 +1230,7 @@ function logContact() {
   if (!date) { notify('Please select a date'); return; }
   state.contactLog.unshift({date, channel, outcome, notes});
   renderContactLog();
+  saveState();
   document.getElementById('fu-notes').value = '';
   notify('Contact logged ✓');
 }
@@ -1235,6 +1265,7 @@ window.showPanel = function(id) {
 // INIT
 // ═══════════════════════════════════════════════════════════
 renderSegGrid();
+loadState();
 </script>
 </body>
 </html>
