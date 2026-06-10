@@ -85,13 +85,33 @@ textarea.form-input{resize:vertical;min-height:70px}
 .result-unit{font-size:11px;color:var(--muted);margin-left:4px}
 
 /* Retirement Sum Progress Bars */
-.sum-progress{width:100%;height:6px;border-radius:3px;background:rgba(255,255,255,.1);margin-top:6px;overflow:hidden}
-.sum-progress-fill{height:100%;border-radius:3px;transition:width .3s}
+.sum-progress{width:100%;height:8px;border-radius:4px;background:rgba(255,255,255,.08);margin-top:8px;overflow:hidden}
+.sum-progress-fill{height:100%;border-radius:4px;transition:width .3s}
 .sum-progress-brs{background:var(--amber)}
 .sum-progress-ers{background:var(--blue)}
 .sum-progress-frs{background:var(--green)}
-.sum-progress-label{font-size:10px;color:var(--muted);margin-top:4px;display:flex;justify-content:space-between}
+.sum-progress-label{font-size:11px;color:var(--muted);margin-top:6px;display:flex;justify-content:space-between;align-items:center}
 .sum-progress-value{font-weight:600;color:var(--white)}
+.sum-progress-current{font-weight:600;color:var(--teal2);font-size:11px}
+
+/* Enhanced Result Cards */
+.result-card-wage{background:rgba(44, 195, 165, 0.1);border:1px solid rgba(44, 195, 165, 0.3)}
+.result-card-contribution{background:rgba(16, 185, 129, 0.1);border:1px solid rgba(16, 185, 129, 0.3)}
+.result-card-projection{background:rgba(59, 130, 246, 0.1);border:1px solid rgba(59, 130, 246, 0.3)}
+.result-card-summary{background:rgba(148, 163, 184, 0.1);border:1px solid rgba(148, 163, 184, 0.3)}
+.result-card-highlight{background:rgba(245, 158, 11, 0.15);border:1px solid rgba(245, 158, 11, 0.3)}
+
+.result-label-wage{color:var(--teal2);font-weight:500}
+.result-label-contribution{color:var(--green);font-weight:500}
+.result-label-projection{color:var(--blue);font-weight:500}
+.result-label-summary{color:var(--muted);font-weight:500}
+.result-label-highlight{color:var(--amber);font-weight:500}
+
+.result-value-wage{color:var(--teal2);font-size:19px}
+.result-value-contribution{color:var(--green);font-size:19px}
+.result-value-projection{color:var(--blue);font-size:19px}
+.result-value-summary{color:var(--white);font-size:19px}
+.result-value-highlight{color:var(--amber);font-size:19px}
 
 .slider-container{margin-top:8px}
 .slider{width:100%;height:4px;border-radius:2px;background:rgba(255,255,255,.1);outline:none;-webkit-appearance:none}
@@ -362,14 +382,14 @@ function calculateCPF() {
   // Display results based on age
   const results = [];
 
-  // Add wage and contribution summary for all ages
+  // Add wage and contribution summary for all ages with better visual distinction
   results.push(
-    { label: 'Gross Annual Wage', value: grossAnnualWage.toFixed(0), unit: '' },
-    { label: 'Annual Salary', value: annualSalary.toFixed(0), unit: '' },
-    { label: 'Annual Bonus', value: annualBonus.toFixed(0), unit: '' },
-    { label: 'Employee Contribution', value: employeeContribution.toFixed(2), unit: '' },
-    { label: 'Employer Contribution', value: employerContribution.toFixed(2), unit: '' },
-    { label: 'Total Monthly Contribution', value: totalContribution.toFixed(2), unit: '' }
+    { label: 'Gross Annual Wage', value: grossAnnualWage.toFixed(0), unit: '', class: 'wage' },
+    { label: 'Annual Salary', value: annualSalary.toFixed(0), unit: '', class: 'wage' },
+    { label: 'Annual Bonus', value: annualBonus.toFixed(0), unit: '', class: 'wage' },
+    { label: 'Employee Contribution', value: employeeContribution.toFixed(2), unit: '', class: 'contribution' },
+    { label: 'Employer Contribution', value: employerContribution.toFixed(2), unit: '', class: 'contribution' },
+    { label: 'Total Monthly Contribution', value: totalContribution.toFixed(2), unit: '', class: 'contribution' }
   );
 
   if (age >= 55) {
@@ -470,33 +490,49 @@ function calculateRetirement() {
 // Helper functions
 function displayResults(results, gridId) {
   const grid = document.getElementById(gridId);
-  grid.innerHTML = results.map(r => `
-    <div class="result-card">
-      <div class="result-label">${r.label}</div>
-      <div style="display:flex;align-items:baseline;gap:4px">
-        <div class="result-value">S$${r.value}</div>
-        <div class="result-unit">${r.unit}</div>
-      </div>
-    </div>
-  `).join('');
 
-  // Add Retirement Sum Progress Visualization for ages 55+
-  const age = parseInt(document.getElementById('age').value);
-  if (age >= 55 && gridId === 'results-grid') {
-    const raBalance = parseFloat(document.getElementById('ra-balance')?.value || 0);
-    const projectedRa = parseFloat(results.find(r => r.label === 'Projected RA at 65')?.value.replace(/,/g, '') || 0);
+  // Map results to HTML with proper CSS classes
+  grid.innerHTML = results.map(r => {
+    const cardClass = getCardClass(r.class);
+    const labelClass = getLabelClass(r.class);
+    const valueClass = getValueClass(r.class);
+
+    return `
+      <div class="result-card ${cardClass}">
+        <div class="result-label ${labelClass}">${r.label}</div>
+        <div style="display:flex;align-items:baseline;gap:4px">
+          <div class="result-value ${valueClass}">S$${r.value}</div>
+          <div class="result-unit">${r.unit}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Add Retirement Sum Progress Visualization for ALL ages
+  if (gridId === 'results-grid') {
+    const age = parseInt(document.getElementById('age').value);
+    const totalCpfAt65 = age >= 55 ?
+      parseFloat(results.find(r => r.label === 'Total CPF at 65')?.value.replace(/,/g, '') || 0) :
+      parseFloat(results.find(r => r.label === 'Total CPF at 65')?.value.replace(/,/g, '') || 0);
 
     // Calculate progress towards each retirement sum
-    const brsProgress = Math.min((projectedRa / BRS_2026) * 100, 100);
-    const frsProgress = Math.min((projectedRa / FRS_2026) * 100, 100);
-    const ersProgress = Math.min((projectedRa / ERS_2026) * 100, 100);
+    const brsProgress = Math.min((totalCpfAt65 / BRS_2026) * 100, 100);
+    const frsProgress = Math.min((totalCpfAt65 / FRS_2026) * 100, 100);
+    const ersProgress = Math.min((totalCpfAt65 / ERS_2026) * 100, 100);
+
+    // Determine which account to use for projection
+    const accountType = age >= 55 ? 'RA' : 'SA/RA';
+    const projectedValue = age >= 55 ?
+      results.find(r => r.label === 'Projected RA at 65')?.value || '0' :
+      results.find(r => r.label === 'Projected SA at 65')?.value || '0';
 
     // Create progress visualization
     const progressHTML = `
-      <div class="result-card" style="grid-column: 1 / -1;">
-        <div class="result-label">🎯 Retirement Sum Progress (Projected at 65)</div>
+      <div class="result-card result-card-highlight" style="grid-column: 1 / -1;">
+        <div class="result-label result-label-highlight">🎯 Retirement Sum Progress (Projected at 65)</div>
         <div style="margin-top: 8px;">
           <div class="sum-progress-label">
+            <span class="sum-progress-current">S$${projectedValue} / </span>
             <span>BRS (S$${BRS_2026.toLocaleString()})</span>
             <span class="sum-progress-value">${brsProgress.toFixed(1)}%</span>
           </div>
@@ -506,6 +542,7 @@ function displayResults(results, gridId) {
         </div>
         <div style="margin-top: 12px;">
           <div class="sum-progress-label">
+            <span class="sum-progress-current">S$${projectedValue} / </span>
             <span>FRS (S$${FRS_2026.toLocaleString()})</span>
             <span class="sum-progress-value">${frsProgress.toFixed(1)}%</span>
           </div>
@@ -515,6 +552,7 @@ function displayResults(results, gridId) {
         </div>
         <div style="margin-top: 12px;">
           <div class="sum-progress-label">
+            <span class="sum-progress-current">S$${projectedValue} / </span>
             <span>ERS (S$${ERS_2026.toLocaleString()})</span>
             <span class="sum-progress-value">${ersProgress.toFixed(1)}%</span>
           </div>
@@ -524,16 +562,50 @@ function displayResults(results, gridId) {
         </div>
         <div style="margin-top: 12px;padding:8px;background:rgba(255,255,255,.04);border-radius:6px;font-size:11px;">
           <strong>Status:</strong>
-          ${projectedRa >= ERS_2026 ? '🏆 ERS Achieved' :
-            projectedRa >= FRS_2026 ? '🎯 FRS Achieved' :
-            projectedRa >= BRS_2026 ? '⚠️ BRS Achieved' : '❌ Below BRS'}
-          ${projectedRa >= ERS_2026 ? '' :
-            ` | Shortfall: S$${(ERS_2026 - projectedRa).toLocaleString()} to ERS`}
+          ${totalCpfAt65 >= ERS_2026 ? '🏆 ERS Achieved' :
+            totalCpfAt65 >= FRS_2026 ? '🎯 FRS Achieved' :
+            totalCpfAt65 >= BRS_2026 ? '⚠️ BRS Achieved' : '❌ Below BRS'}
+          ${totalCpfAt65 >= ERS_2026 ? '' :
+            ` | Shortfall: S$${(ERS_2026 - totalCpfAt65).toLocaleString()} to ERS`}
         </div>
       </div>
     `;
 
     grid.insertAdjacentHTML('beforeend', progressHTML);
+  }
+}
+
+// Helper functions for CSS classes
+function getCardClass(type) {
+  switch(type) {
+    case 'wage': return 'result-card-wage';
+    case 'contribution': return 'result-card-contribution';
+    case 'projection': return 'result-card-projection';
+    case 'summary': return 'result-card-summary';
+    case 'highlight': return 'result-card-highlight';
+    default: return '';
+  }
+}
+
+function getLabelClass(type) {
+  switch(type) {
+    case 'wage': return 'result-label-wage';
+    case 'contribution': return 'result-label-contribution';
+    case 'projection': return 'result-label-projection';
+    case 'summary': return 'result-label-summary';
+    case 'highlight': return 'result-label-highlight';
+    default: return '';
+  }
+}
+
+function getValueClass(type) {
+  switch(type) {
+    case 'wage': return 'result-value-wage';
+    case 'contribution': return 'result-value-contribution';
+    case 'projection': return 'result-value-projection';
+    case 'summary': return 'result-value-summary';
+    case 'highlight': return 'result-value-highlight';
+    default: return '';
   }
 }
 
