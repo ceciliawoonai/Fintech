@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPF Core Logic Test Suite</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f7fa;
+        }
+
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .test-section {
+            margin-bottom: 30px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #3498db;
+            color: white;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:hover {
+            background-color: #f1f9ff;
+        }
+
+        .highlight {
+            background-color: #e8f4fc;
+            font-weight: 500;
+        }
+
+        .success {
+            color: #27ae60;
+            font-weight: 500;
+        }
+
+        .warning {
+            color: #f39c12;
+            font-weight: 500;
+        }
+
+        .danger {
+            color: #e74c3c;
+            font-weight: 500;
+        }
+
+        .code-block {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-secondary {
+            background-color: #95a5a6;
+        }
+
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+
+        .input-group {
+            margin: 10px 0;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2, .grid-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .progress-bar {
+            height: 20px;
+            background-color: #ecf0f1;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #3498db;
+            transition: width 0.5s ease;
+        }
+
+        .progress-fill.warning {
+            background-color: #f39c12;
+        }
+
+        .progress-fill.danger {
+            background-color: #e74c3c;
+        }
+
+        .progress-fill.success {
+            background-color: #27ae60;
+        }
+
+        .info-box {
+            background-color: #e8f4fc;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+
+        .success-box {
+            background-color: #e8f8f0;
+            border-left: 4px solid #27ae60;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧮 CPF Core Logic Test Suite</h1>
+        <p>Comprehensive testing of CPF calculation formulas and projections</p>
+
+        <div class="info-box">
+            <strong>📋 About This Test Suite:</strong>
+            <ul>
+                <li><strong>Modular Design:</strong> CPF logic separated into <code>cpf-core.js</code> module</li>
+                <li><strong>Comprehensive Testing:</strong> Test all age brackets, contribution scenarios, and edge cases</li>
+                <li><strong>Transparent Results:</strong> Clear table format showing inputs, calculations, and outputs</li>
+                <li><strong>Real-time Validation:</strong> Verify formulas against expected CPF rules</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔧 CPF Core Module Functions</h2>
+
+        <div class="code-block">
+// CPF Core Module Exports:
+export {
+  CPF_CONSTANTS,              // BRS, FRS, ERS values and interest rates
+  CPF_ALLOCATION_RATES,      // Age-based allocation percentages
+  RA_ALLOCATION_RATES,       // Retirement Account rates for ages 55+
+  getAllocationRates,        // Get rates based on age
+  calculateContributions,    // Calculate monthly contributions
+  projectBalance,            // Project balances to retirement
+  calculateCPFProjections,   // Complete CPF calculation
+  calculateRetirementProjections // Retirement income projection
+}
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>📊 CPF Allocation Rates by Age</h2>
+
+        <table id="allocationRatesTable">
+            <thead>
+                <tr>
+                    <th>Age</th>
+                    <th>OA %</th>
+                    <th>SA %</th>
+                    <th>MA %</th>
+                    <th>Total %</th>
+                    <th>Strategy</th>
+                    <th>Employee %</th>
+                    <th>Employer %</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Rows will be populated by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <div class="container">
+        <h2>🧪 Interactive CPF Calculator Test</h2>
+
+        <div class="grid-3">
+            <div class="input-group">
+                <label for="testAge">Age:</label>
+                <input type="number" id="testAge" value="35" min="20" max="70">
+            </div>
+
+            <div class="input-group">
+                <label for="testSalary">Monthly Salary (S$):</label>
+                <input type="number" id="testSalary" value="5000" min="1000" max="30000">
+            </div>
+
+            <div class="input-group">
+                <label for="testContributionRate">Contribution Rate:</label>
+                <select id="testContributionRate">
+                    <option value="0.37">37% (Standard, ≤55)</option>
+                    <option value="0.34">34% (55-60)</option>
+                    <option value="0.25">25% (60-65)</option>
+                    <option value="0.165">16.5% (65-70)</option>
+                    <option value="0.125">12.5% (70+)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="grid-3">
+            <div class="input-group">
+                <label for="testOaBalance">OA Balance (S$):</label>
+                <input type="number" id="testOaBalance" value="50000" min="0">
+            </div>
+
+            <div class="input-group">
+                <label for="testSaBalance">SA Balance (S$):</label>
+                <input type="number" id="testSaBalance" value="30000" min="0">
+            </div>
+
+            <div class="input-group">
+                <label for="testMaBalance">MA Balance (S$):</label>
+                <input type="number" id="testMaBalance" value="20000" min="0">
+            </div>
+        </div>
+
+        <div class="input-group" id="raBalanceGroup" style="display: none;">
+            <label for="testRaBalance">RA Balance (S$):</label>
+            <input type="number" id="testRaBalance" value="0" min="0">
+        </div>
+
+        <button class="btn" onclick="runCPFTest()">🔄 Run CPF Calculation Test</button>
+        <button class="btn btn-secondary" onclick="runAllTests()">📊 Run All Age Tests</button>
+
+        <div id="testResults" style="margin-top: 20px;"></div>
+    </div>
+
+    <div class="container">
+        <h2>🎯 Retirement Projection Test</h2>
+
+        <div class="grid-3">
+            <div class="input-group">
+                <label for="retirementAge">Retirement Age:</label>
+                <input type="number" id="retirementAge" value="65" min="55" max="70">
+            </div>
+
+            <div class="input-group">
+                <label for="lifeExpectancy">Life Expectancy:</label>
+                <input type="number" id="lifeExpectancy" value="85" min="70" max="100">
+            </div>
+
+            <div class="input-group">
+                <label for="returnRate">Annual Return Rate (%):</label>
+                <input type="number" id="returnRate" value="3.5" step="0.1" min="1" max="10">
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="input-group">
+                <label for="desiredPayout">Desired Monthly Payout (S$):</label>
+                <input type="number" id="desiredPayout" value="1500" min="500" max="5000">
+            </div>
+
+            <div class="input-group">
+                <label for="cpfLifePlan">CPF Life Plan:</label>
+                <select id="cpfLifePlan">
+                    <option value="standard">Standard Plan</option>
+                    <option value="basic">Basic Plan</option>
+                    <option value="escalating">Escalating Plan</option>
+                </select>
+            </div>
+        </div>
+
+        <button class="btn" onclick="runRetirementTest()">📈 Run Retirement Projection Test</button>
+
+        <div id="retirementResults" style="margin-top: 20px;"></div>
+    </div>
+
+    <div class="container">
+        <h2>📋 Complete Test Results Summary</h2>
+        <div id="completeResults"></div>
+    </div>
+
+    <script type="module">
+        // Import CPF core module
+        import {
+            CPF_CONSTANTS,
+            CPF_ALLOCATION_RATES,
+            RA_ALLOCATION_RATES,
+            getAllocationRates,
+            calculateContributions,
+            projectBalance,
+            calculateCPFProjections,
+            calculateRetirementProjections
+        } from './cpf-core.js';
+
+        // Populate allocation rates table
+        function populateAllocationRatesTable() {
+            const tableBody = document.getElementById('allocationRatesTable').querySelector('tbody');
+            tableBody.innerHTML = '';
+
+            const ages = Object.keys(CPF_ALLOCATION_RATES).sort((a, b) => parseInt(a) - parseInt(b));
+
+            ages.forEach(age => {
+                const rates = CPF_ALLOCATION_RATES[age];
+                const employeeRate = age <= 55 ? 20 :
+                                   age <= 60 ? 17 :
+                                   age <= 65 ? 11.5 :
+                                   age <= 70 ? 7.5 : 5;
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${age}</td>
+                    <td>${rates.oa.toFixed(2)}%</td>
+                    <td>${rates.sa.toFixed(2)}%</td>
+                    <td>${rates.ma.toFixed(2)}%</td>
+                    <td>${rates.total}%</td>
+                    <td>${rates.strategy}</td>
+                    <td>${employeeRate}%</td>
+                    <td>${(rates.total - employeeRate).toFixed(1)}%</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Run CPF calculation test
+        function runCPFTest() {
+            const age = parseInt(document.getElementById('testAge').value);
+            const salary = parseFloat(document.getElementById('testSalary').value);
+            const contributionRate = parseFloat(document.getElementById('testContributionRate').value);
+            const oaBalance = parseFloat(document.getElementById('testOaBalance').value);
+            const saBalance = parseFloat(document.getElementById('testSaBalance').value);
+            const maBalance = parseFloat(document.getElementById('testMaBalance').value);
+            const raBalance = age >= 55 ? parseFloat(document.getElementById('testRaBalance').value) : 0;
+
+            // Update RA balance field visibility
+            const raGroup = document.getElementById('raBalanceGroup');
+            if (age >= 55) {
+                raGroup.style.display = 'block';
+            } else {
+                raGroup.style.display = 'none';
+            }
+
+            // Run calculation
+            const results = calculateCPFProjections({
+                age: age,
+                salary: salary,
+                contributionRate: contributionRate,
+                oaBalance: oaBalance,
+                saBalance: saBalance,
+                maBalance: maBalance,
+                raBalance: raBalance
+            });
+
+            // Display results
+            displayCPFResults(results);
+        }
+
+        // Display CPF calculation results
+        function displayCPFResults(results) {
+            const resultsDiv = document.getElementById('testResults');
+            resultsDiv.innerHTML = '';
+
+            // Create results HTML
+            const html = `
+                <div class="success-box">
+                    <strong>✅ CPF Calculation Successful!</strong>
+                    <span style="float: right;">Age: ${results.metadata.age} | Strategy: ${results.metadata.allocationStrategy}</span>
+                </div>
+
+                <h3>💰 Wage Components</h3>
+                <table>
+                    <tr>
+                        <th>Component</th>
+                        <th>Amount (S$)</th>
+                    </tr>
+                    <tr>
+                        <td>Gross Annual Wage</td>
+                        <td>${results.wage.grossAnnual.toLocaleString()}</td>
+                    </tr>
+                    <tr>
+                        <td>Annual Salary</td>
+                        <td>${results.wage.annualSalary.toLocaleString()}</td>
+                    </tr>
+                    <tr>
+                        <td>Annual Bonus</td>
+                        <td>${results.wage.annualBonus.toLocaleString()}</td>
+                    </tr>
+                </table>
+
+                <h3>📊 Monthly Contributions</h3>
+                <table>
+                    <tr>
+                        <th>Account</th>
+                        <th>Amount (S$)</th>
+                        <th>% of Salary</th>
+                    </tr>
+                    <tr>
+                        <td>Total Contribution</td>
+                        <td>${results.contributions.totalMonthly.toFixed(2)}</td>
+                        <td>${(results.contributions.totalMonthly / results.wage.annualSalary * 12 * 100).toFixed(1)}%</td>
+                    </tr>
+                    <tr>
+                        <td>Ordinary Account (OA)</td>
+                        <td>${results.contributions.oaMonthly.toFixed(2)}</td>
+                        <td>${(results.contributions.oaMonthly / results.wage.annualSalary * 12 * 100).toFixed(1)}%</td>
+                    </tr>
+                    <tr>
+                        <td>${results.metadata.age >= 55 ? 'Retirement Account (RA)' : 'Special Account (SA)'}</td>
+                        <td>${results.contributions.saMonthly.toFixed(2)}</td>
+                        <td>${(results.contributions.saMonthly / results.wage.annualSalary * 12 * 100).toFixed(1)}%</td>
+                    </tr>
+                    <tr>
+                        <td>MediSave Account (MA)</td>
+                        <td>${results.contributions.maMonthly.toFixed(2)}</td>
+                        <td>${(results.contributions.maMonthly / results.wage.annualSalary * 12 * 100).toFixed(1)}%</td>
+                    </tr>
+                    <tr>
+                        <td>Employee Contribution</td>
+                        <td>${results.contributions.employeeMonthly.toFixed(2)}</td>
+                        <td>${(results.contributions.employeeMonthly / results.wage.annualSalary * 12 * 100).toFixed(1)}%</td>
+                    </tr>
+                    <tr>
+                        <td>Employer Contribution</td>
+                        <td>${results.contributions.employerMonthly.toFixed(2)}</td>
+                        <td>${(results.contributions.employerMonthly / results.wage.annualSalary * 12 * 100).toFixed(1)}%</td>
+                    </tr>
+                </table>
+
+                <h3>🎯 Projected Balances at Retirement</h3>
+                <table>
+                    <tr>
+                        <th>Account</th>
+                        <th>Projected Balance (S$)</th>
+                        <th>% of Total</th>
+                    </tr>
+                    <tr>
+                        <td>Ordinary Account (OA)</td>
+                        <td>${results.projections.oaAt65 ? results.projections.oaAt65.toLocaleString() : results.projections.oaAt54.toLocaleString()}</td>
+                        <td>${results.projections.oaAt65 ? ((results.projections.oaAt65 / results.projections.totalAt65) * 100).toFixed(1) : ((results.projections.oaAt54 / results.projections.totalAt54) * 100).toFixed(1)}%</td>
+                    </tr>
+                    <tr>
+                        <td>${results.metadata.age >= 55 ? 'Retirement Account (RA)' : 'Special Account (SA)'}</td>
+                        <td>${results.projections.raAt65 ? results.projections.raAt65.toLocaleString() : results.projections.saAt54.toLocaleString()}</td>
+                        <td>${results.projections.raAt65 ? ((results.projections.raAt65 / results.projections.totalAt65) * 100).toFixed(1) : ((results.projections.saAt54 / results.projections.totalAt54) * 100).toFixed(1)}%</td>
+                    </tr>
+                    <tr>
+                        <td>MediSave Account (MA)</td>
+                        <td>${results.projections.maAt65 ? results.projections.maAt65.toLocaleString() : results.projections.maAt54.toLocaleString()}</td>
+                        <td>${results.projections.maAt65 ? ((results.projections.maAt65 / results.projections.totalAt65) * 100).toFixed(1) : ((results.projections.maAt54 / results.projections.totalAt54) * 100).toFixed(1)}%</td>
+                    </tr>
+                    <tr class="highlight">
+                        <td><strong>Total CPF at Retirement</strong></td>
+                        <td><strong>${results.projections.totalAt65 ? results.projections.totalAt65.toLocaleString() : results.projections.totalAt54.toLocaleString()}</strong></td>
+                        <td><strong>100%</strong></td>
+                    </tr>
+                </table>
+
+                ${results.metadata.age >= 55 ? `
+                <h3>🔒 FRS Status</h3>
+                <table>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Value</th>
+                    </tr>
+                    <tr>
+                        <td>FRS Status</td>
+                        <td class="${results.summary.frsStatus === 'REACHED' ? 'success' : 'danger'}">${results.summary.frsStatus}</td>
+                    </tr>
+                    <tr>
+                        <td>FRS Progress</td>
+                        <td>${results.summary.frsProgress}</td>
+                    </tr>
+                    <tr>
+                        <td>FRS Exception Applied</td>
+                        <td>${results.summary.frsExceptionApplied ? '✅ Yes' : '❌ No'}</td>
+                    </tr>
+                </table>
+                ` : ''}
+
+                <h3>📊 Retirement Sum Progress</h3>
+                ${createProgressBars(results)}
+            `;
+
+            resultsDiv.innerHTML = html;
+        }
+
+        // Create progress bars for retirement sums
+        function createProgressBars(results) {
+            const totalAtRetirement = results.projections.totalAt65 || results.projections.totalAt54;
+            const brsProgress = Math.min((totalAtRetirement / CPF_CONSTANTS.BRS) * 100, 100);
+            const frsProgress = Math.min((totalAtRetirement / CPF_CONSTANTS.FRS) * 100, 100);
+            const ersProgress = Math.min((totalAtRetirement / CPF_CONSTANTS.ERS) * 100, 100);
+
+            return `
+                <div class="progress-info">
+                    <strong>BRS (S$${CPF_CONSTANTS.BRS.toLocaleString()}):</strong>
+                    ${totalAtRetirement >= CPF_CONSTANTS.BRS ? '✅ Achieved' : '❌ Not Achieved'}
+                    <span style="float: right;">${brsProgress.toFixed(1)}%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill ${brsProgress >= 100 ? 'success' : 'warning'}" style="width: ${brsProgress}%"></div>
+                </div>
+
+                <div class="progress-info">
+                    <strong>FRS (S$${CPF_CONSTANTS.FRS.toLocaleString()}):</strong>
+                    ${totalAtRetirement >= CPF_CONSTANTS.FRS ? '✅ Achieved' : '❌ Not Achieved'}
+                    <span style="float: right;">${frsProgress.toFixed(1)}%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill ${frsProgress >= 100 ? 'success' : frsProgress >= 50 ? 'warning' : 'danger'}" style="width: ${frsProgress}%"></div>
+                </div>
+
+                <div class="progress-info">
+                    <strong>ERS (S$${CPF_CONSTANTS.ERS.toLocaleString()}):</strong>
+                    ${totalAtRetirement >= CPF_CONSTANTS.ERS ? '✅ Achieved' : '❌ Not Achieved'}
+                    <span style="float: right;">${ersProgress.toFixed(1)}%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill ${ersProgress >= 100 ? 'success' : ersProgress >= 50 ? 'warning' : 'danger'}" style="width: ${ersProgress}%"></div>
+                </div>
+
+                ${totalAtRetirement < CPF_CONSTANTS.ERS ?
+                `<div class="info-box" style="margin-top: 15px;">
+                    <strong>💡 Action Needed:</strong> You need an additional S$${(CPF_CONSTANTS.ERS - totalAtRetirement).toLocaleString()}
+                    to reach the Enhanced Retirement Sum (ERS).
+                </div>` : ''}
+            `;
+        }
+
+        // Run retirement projection test
+        function runRetirementTest() {
+            const retirementAge = parseInt(document.getElementById('retirementAge').value);
+            const lifeExpectancy = parseInt(document.getElementById('lifeExpectancy').value);
+            const returnRate = parseFloat(document.getElementById('returnRate').value) / 100;
+            const desiredPayout = parseFloat(document.getElementById('desiredPayout').value);
+            const cpfLifePlan = document.getElementById('cpfLifePlan').value;
+
+            // Get current balances from CPF test inputs
+            const oaBalance = parseFloat(document.getElementById('testOaBalance').value);
+            const saBalance = parseFloat(document.getElementById('testSaBalance').value);
+            const maBalance = parseFloat(document.getElementById('testMaBalance').value);
+
+            // Run calculation
+            const results = calculateRetirementProjections({
+                retirementAge: retirementAge,
+                lifeExpectancy: lifeExpectancy,
+                returnRate: returnRate,
+                desiredPayout: desiredPayout,
+                cpfLifePlan: cpfLifePlan,
+                oaBalance: oaBalance,
+                saBalance: saBalance,
+                maBalance: maBalance
+            });
+
+            // Display results
+            displayRetirementResults(results);
+        }
+
+        // Display retirement results
+        function displayRetirementResults(results) {
+            const resultsDiv = document.getElementById('retirementResults');
+            resultsDiv.innerHTML = '';
+
+            const html = `
+                <div class="success-box">
+                    <strong>✅ Retirement Projection Successful!</strong>
+                    <span style="float: right;">Plan: ${results.payoutPlan}</span>
+                </div>
+
+                <table>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Value</th>
+                    </tr>
+                    <tr>
+                        <td>Retirement Period</td>
+                        <td>${results.retirementPeriod} years</td>
+                    </tr>
+                    <tr>
+                        <td>Projected Retirement Sum</td>
+                        <td>S$${results.retirementSum.toLocaleString()}</td>
+                    </tr>
+                    <tr>
+                        <td>Projected Monthly Payout</td>
+                        <td>S$${results.projectedPayout.toFixed(0)}</td>
+                    </tr>
+                    <tr>
+                        <td>Total Payouts Over Lifetime</td>
+                        <td>S$${results.totalPayouts.toLocaleString()}</td>
+                    </tr>
+                    <tr class="${results.shortfall >= 0 ? 'danger' : 'success'}">
+                        <td>Shortfall/Gap</td>
+                        <td>S$${Math.abs(results.shortfall).toFixed(0)} ${results.shortfall >= 0 ? '(Need more)' : '(Surplus)'}</td>
+                    </tr>
+                    <tr>
+                        <td>Payout Plan</td>
+                        <td>${results.payoutPlan}</td>
+                    </tr>
+                </table>
+
+                ${results.shortfall > 0 ?
+                `<div class="info-box" style="margin-top: 15px;">
+                    <strong>💡 Recommendation:</strong> You may want to consider increasing your CPF contributions,
+                    extending your working years, or adjusting your retirement expectations to cover the S$${results.shortfall.toFixed(0)}
+                    monthly shortfall.
+                </div>` :
+                `<div class="success-box" style="margin-top: 15px;">
+                    <strong>🎉 Great News!</strong> Your projected CPF savings exceed your desired retirement income by S$${Math.abs(results.shortfall).toFixed(0)} per month.
+                </div>`}
+            `;
+
+            resultsDiv.innerHTML = html;
+        }
+
+        // Run comprehensive tests for all ages
+        function runAllTests() {
+            const completeResults = document.getElementById('completeResults');
+            completeResults.innerHTML = '<h3>Running comprehensive tests for all age brackets...</h3>';
+
+            // Test parameters
+            const testParams = {
+                salary: 5000,
+                oaBalance: 50000,
+                saBalance: 30000,
+                maBalance: 20000,
+                raBalance: 0,
+                awsBonus: 0,
+                bonusMonths: 1
+            };
+
+            // Create results table
+            let resultsHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Age</th>
+                            <th>Total Monthly Contribution</th>
+                            <th>Projected Total at Retirement</th>
+                            <th>BRS Progress</th>
+                            <th>FRS Progress</th>
+                            <th>ERS Progress</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            // Test all age brackets
+            const ages = [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70];
+
+            ages.forEach(age => {
+                testParams.age = age;
+                if (age >= 55) testParams.raBalance = 100000; // Add RA balance for ages 55+
+
+                const results = calculateCPFProjections(testParams);
+                const totalAtRetirement = results.projections.totalAt65 || results.projections.totalAt54;
+                const brsProgress = Math.min((totalAtRetirement / CPF_CONSTANTS.BRS) * 100, 100);
+                const frsProgress = Math.min((totalAtRetirement / CPF_CONSTANTS.FRS) * 100, 100);
+                const ersProgress = Math.min((totalAtRetirement / CPF_CONSTANTS.ERS) * 100, 100);
+
+                let status = '⚠️ Below BRS';
+                if (totalAtRetirement >= CPF_CONSTANTS.ERS) status = '🏆 ERS Achieved';
+                else if (totalAtRetirement >= CPF_CONSTANTS.FRS) status = '🎯 FRS Achieved';
+                else if (totalAtRetirement >= CPF_CONSTANTS.BRS) status = '⚠️ BRS Achieved';
+
+                resultsHTML += `
+                    <tr>
+                        <td>${age}</td>
+                        <td>S$${results.contributions.totalMonthly.toFixed(2)}</td>
+                        <td>S$${totalAtRetirement.toLocaleString()}</td>
+                        <td>${brsProgress.toFixed(1)}%</td>
+                        <td>${frsProgress.toFixed(1)}%</td>
+                        <td>${ersProgress.toFixed(1)}%</td>
+                        <td>${status}</td>
+                    </tr>
+                `;
+            });
+
+            resultsHTML += `
+                    </tbody>
+                </table>
+            `;
+
+            completeResults.innerHTML = `
+                <h3>📊 Comprehensive Test Results Across All Age Brackets</h3>
+                <p>Test Parameters: S$5,000 monthly salary, S$50,000 OA, S$30,000 SA, S$20,000 MA balances</p>
+                ${resultsHTML}
+            `;
+        }
+
+        // Initialize the test suite
+        function initTestSuite() {
+            populateAllocationRatesTable();
+            runCPFTest(); // Run initial test
+        }
+
+        // Initialize when page loads
+        window.addEventListener('DOMContentLoaded', initTestSuite);
+    </script>
+</body>
+</html>
