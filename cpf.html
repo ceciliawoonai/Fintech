@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CPF & Retirement Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --navy:#0F172A;--navy2:#1E293B;--navy3:#334155;
+  --teal:#0D9488;--teal2:#14B8A6;--teal3:#CCFBF1;
+  --white:#FFFFFF;--off:#F8FAFC;--muted:#94A3B8;
+  --border:#1E293B;--card:#1E2D3D;
+  --red:#EF4444;--amber:#F59E0B;--green:#10B981;--purple:#8B5CF6;--blue:#3B82F6;--pink:#EC4899;
+  --radius:10px;--radius-lg:16px;
+}
+html,body{height:100%;background:var(--navy);color:var(--white);font-family:'Inter',sans-serif;font-size:14px;overflow:hidden}
+
+#app{display:flex;height:100vh}
+#sidebar{width:220px;background:var(--navy2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+#main{flex:1;overflow-y:auto;background:var(--navy)}
+
+.brand{padding:20px 20px 16px;border-bottom:1px solid var(--border)}
+.brand-name{font-size:15px;font-weight:700;color:var(--white);letter-spacing:-.3px}
+.brand-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.nav{padding:12px 8px;flex:1}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;color:var(--muted);font-size:13px;font-weight:500;margin-bottom:2px;transition:all .15s;border:none;background:none;width:100%;text-align:left}
+.nav-item:hover{background:rgba(255,255,255,.06);color:var(--white)}
+.nav-item.active{background:rgba(13,148,136,.18);color:var(--teal2)}
+.nav-icon{font-size:16px;width:18px;text-align:center}
+.sidebar-footer{padding:12px 16px;border-top:1px solid var(--border)}
+.client-pill{display:flex;align-items:center;gap:8px}
+.client-avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#0D9488,#8B5CF6);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.client-info{font-size:11px;color:var(--muted);line-height:1.4}
+.client-info strong{color:var(--white);font-size:12px;display:block}
+
+.panel{display:none;padding:28px 32px;min-height:100%}
+.panel.active{display:block}
+.panel-header{margin-bottom:24px}
+.panel-title{font-size:22px;font-weight:700;color:var(--white);letter-spacing:-.4px}
+.panel-sub{font-size:13px;color:var(--muted);margin-top:4px}
+
+.card{background:var(--navy2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px}
+.card-sm{background:var(--navy2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+
+.stat{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+.stat-val{font-size:24px;font-weight:700;color:var(--white);line-height:1}
+.stat-label{font-size:11px;color:var(--muted);margin-top:4px}
+
+.form-group{margin-bottom:16px}
+.form-label{font-size:12px;color:var(--muted);margin-bottom:6px;display:block;font-weight:500}
+.form-input{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--white);font-size:13px;font-family:'Inter',sans-serif;transition:border .15s}
+.form-input:focus{outline:none;border-color:var(--teal)}
+.form-input::placeholder{color:var(--muted)}
+select.form-input option{background:#1E293B;color:var(--white)}
+textarea.form-input{resize:vertical;min-height:70px}
+
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:var(--teal);color:var(--white)}
+.btn-primary:hover{background:var(--teal2)}
+.btn-ghost{background:rgba(255,255,255,.07);color:var(--white);border:1px solid var(--border)}
+.btn-ghost:hover{background:rgba(255,255,255,.12)}
+.btn-sm{padding:6px 12px;font-size:12px}
+
+.notif{position:fixed;bottom:24px;right:24px;background:var(--teal);color:var(--white);padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;opacity:0;transform:translateY(10px);transition:all .3s;z-index:999;pointer-events:none}
+.notif.show{opacity:1;transform:translateY(0)}
+
+#main::-webkit-scrollbar{width:6px}
+#main::-webkit-scrollbar-track{background:transparent}
+#main::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* CPF-Specific Styles */
+.cpf-section{margin-bottom:24px}
+.cpf-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.cpf-title{font-size:16px;font-weight:600;color:var(--white)}
+.cpf-result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:16px}
+
+.result-card{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;padding:16px}
+.result-label{font-size:11px;color:var(--muted);margin-bottom:4px}
+.result-value{font-size:18px;font-weight:700;color:var(--teal2)}
+.result-unit{font-size:11px;color:var(--muted);margin-left:4px}
+
+.slider-container{margin-top:8px}
+.slider{width:100%;height:4px;border-radius:2px;background:rgba(255,255,255,.1);outline:none;-webkit-appearance:none}
+.slider::-webkit-slider-thumb{width:16px;height:16px;border-radius:50%;background:var(--teal);cursor:pointer;-webkit-appearance:none}
+.slider-value{font-size:11px;color:var(--teal);margin-top:4px;text-align:right}
+</style>
+</head>
+<body>
+
+<div id="app">
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="brand">
+    <div class="brand-name">FinPlan AI</div>
+    <div class="brand-sub">CPF & Retirement Calculator</div>
+  </div>
+  <nav class="nav">
+    <button class="nav-item active" onclick="showPanel('calculator')" id="nav-calculator">
+      <span class="nav-icon">📊</span> CPF Calculator
+    </button>
+    <button class="nav-item" onclick="showPanel('projection')" id="nav-projection">
+      <span class="nav-icon">📈</span> Retirement Projection
+    </button>
+    <button class="nav-item" onclick="window.location.href='index.html'">
+      <span class="nav-icon">←</span> Back to Main App
+    </button>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="client-pill">
+      <div class="client-avatar" id="sb-avatar">CPF</div>
+      <div class="client-info">
+        <strong id="sb-name">CPF Calculator</strong>
+        <span id="sb-segment">Retirement Planning Tool</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+<!-- CPF CALCULATOR PANEL -->
+<div class="panel active" id="panel-calculator">
+  <div class="panel-header">
+    <div class="panel-title">CPF Calculator</div>
+    <div class="panel-sub">Calculate your CPF contributions and retirement projections</div>
+  </div>
+
+  <div class="card">
+    <div class="cpf-section">
+      <div class="cpf-header">
+        <div class="cpf-title">Personal Information</div>
+      </div>
+
+      <div class="grid-3">
+        <div class="form-group">
+          <label class="form-label">Current Age</label>
+          <input type="number" id="age" class="form-input" value="35" min="20" max="65">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Monthly Salary (S$)</label>
+          <input type="number" id="salary" class="form-input" value="5000" min="1000" max="30000">
+        </div>
+        <div class="form-group">
+          <label class="form-label">CPF Contribution Rate</label>
+          <select id="contribution-rate" class="form-input">
+            <option value="0.37">37% (Standard)</option>
+            <option value="0.2">20% (Reduced)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="cpf-section">
+      <div class="cpf-header">
+        <div class="cpf-title">CPF Allocation</div>
+      </div>
+
+      <div class="grid-3">
+        <div class="form-group">
+          <label class="form-label">Ordinary Account (%)</label>
+          <input type="number" id="oa-percent" class="form-input" value="23" min="0" max="100">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Special Account (%)</label>
+          <input type="number" id="sa-percent" class="form-input" value="6" min="0" max="100">
+        </div>
+        <div class="form-group">
+          <label class="form-label">MediSave Account (%)</label>
+          <input type="number" id="ma-percent" class="form-input" value="8" min="0" max="100">
+        </div>
+      </div>
+    </div>
+
+    <div class="cpf-section">
+      <div class="cpf-header">
+        <div class="cpf-title">Current Balances</div>
+      </div>
+
+      <div class="grid-3">
+        <div class="form-group">
+          <label class="form-label">OA Balance (S$)</label>
+          <input type="number" id="oa-balance" class="form-input" value="50000" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">SA Balance (S$)</label>
+          <input type="number" id="sa-balance" class="form-input" value="30000" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">MA Balance (S$)</label>
+          <input type="number" id="ma-balance" class="form-input" value="20000" min="0">
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="calculateCPF()">Calculate CPF</button>
+  </div>
+
+  <div id="cpf-results" style="display:none;margin-top:24px">
+    <div class="card">
+      <div class="cpf-title" style="margin-bottom:16px">CPF Contribution Results</div>
+      <div class="cpf-result-grid" id="results-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- RETIREMENT PROJECTION PANEL -->
+<div class="panel" id="panel-projection">
+  <div class="panel-header">
+    <div class="panel-title">Retirement Projection</div>
+    <div class="panel-sub">Project your retirement income based on CPF</div>
+  </div>
+
+  <div class="card">
+    <div class="cpf-section">
+      <div class="cpf-header">
+        <div class="cpf-title">Retirement Parameters</div>
+      </div>
+
+      <div class="grid-3">
+        <div class="form-group">
+          <label class="form-label">Retirement Age</label>
+          <input type="number" id="retirement-age" class="form-input" value="65" min="55" max="70">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Life Expectancy</label>
+          <input type="number" id="life-expectancy" class="form-input" value="85" min="70" max="100">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Annual Return Rate (%)</label>
+          <input type="number" id="return-rate" class="form-input" value="3.5" step="0.1" min="1" max="10">
+        </div>
+      </div>
+    </div>
+
+    <div class="cpf-section">
+      <div class="cpf-header">
+        <div class="cpf-title">CPF Life Plan</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Select CPF Life Plan</label>
+        <select id="cpf-life-plan" class="form-input">
+          <option value="standard">Standard Plan</option>
+          <option value="basic">Basic Plan</option>
+          <option value="escalating">Escalating Plan</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Desired Monthly Payout (S$)</label>
+        <input type="number" id="desired-payout" class="form-input" value="1500" min="500" max="5000">
+        <div class="slider-container">
+          <input type="range" id="payout-slider" class="slider" min="500" max="5000" value="1500" oninput="updateSliderValue()">
+          <div class="slider-value" id="slider-value">S$1,500</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="calculateRetirement()">Calculate Retirement</button>
+  </div>
+
+  <div id="retirement-results" style="display:none;margin-top:24px">
+    <div class="card">
+      <div class="cpf-title" style="margin-bottom:16px">Retirement Projection Results</div>
+      <div class="cpf-result-grid" id="retirement-grid"></div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<div class="notif" id="notif"></div>
+
+<script>
+// CPF Calculation Functions (Based on Excel Logic)
+function calculateCPF() {
+  // Get input values
+  const age = parseInt(document.getElementById('age').value);
+  const salary = parseFloat(document.getElementById('salary').value);
+  const contributionRate = parseFloat(document.getElementById('contribution-rate').value);
+
+  const oaPercent = parseFloat(document.getElementById('oa-percent').value);
+  const saPercent = parseFloat(document.getElementById('sa-percent').value);
+  const maPercent = parseFloat(document.getElementById('ma-percent').value);
+
+  const oaBalance = parseFloat(document.getElementById('oa-balance').value);
+  const saBalance = parseFloat(document.getElementById('sa-balance').value);
+  const maBalance = parseFloat(document.getElementById('ma-balance').value);
+
+  // Calculate monthly contributions (Excel formula logic)
+  const totalContribution = salary * contributionRate;
+  const oaContribution = totalContribution * (oaPercent / 100);
+  const saContribution = totalContribution * (saPercent / 100);
+  const maContribution = totalContribution * (maPercent / 100);
+
+  // Project balances with 3.5% annual growth (from Excel formulas)
+  const annualGrowth = 1.035;
+  const yearsToRetirement = 65 - age;
+  const projectedOa = oaBalance + (oaContribution * 12 * ((Math.pow(annualGrowth, yearsToRetirement) - 1) / (annualGrowth - 1)));
+  const projectedSa = saBalance + (saContribution * 12 * ((Math.pow(annualGrowth, yearsToRetirement) - 1) / (annualGrowth - 1)));
+  const projectedMa = maBalance + (maContribution * 12 * ((Math.pow(annualGrowth, yearsToRetirement) - 1) / (annualGrowth - 1)));
+
+  // Display results
+  const results = [
+    { label: 'Monthly Contribution', value: totalContribution.toFixed(2), unit: '' },
+    { label: 'OA Contribution', value: oaContribution.toFixed(2), unit: '' },
+    { label: 'SA Contribution', value: saContribution.toFixed(2), unit: '' },
+    { label: 'MA Contribution', value: maContribution.toFixed(2), unit: '' },
+    { label: 'Projected OA at 65', value: projectedOa.toFixed(0), unit: '' },
+    { label: 'Projected SA at 65', value: projectedSa.toFixed(0), unit: '' },
+    { label: 'Projected MA at 65', value: projectedMa.toFixed(0), unit: '' },
+    { label: 'Total CPF at 65', value: (projectedOa + projectedSa + projectedMa).toFixed(0), unit: '' }
+  ];
+
+  displayResults(results, 'results-grid');
+  document.getElementById('cpf-results').style.display = 'block';
+  notify('CPF calculation completed!');
+}
+
+// Retirement Projection Functions (Excel-based logic)
+function calculateRetirement() {
+  const retirementAge = parseInt(document.getElementById('retirement-age').value);
+  const lifeExpectancy = parseInt(document.getElementById('life-expectancy').value);
+  const returnRate = parseFloat(document.getElementById('return-rate').value) / 100;
+  const desiredPayout = parseFloat(document.getElementById('desired-payout').value);
+  const cpfLifePlan = document.getElementById('cpf-life-plan').value;
+
+  // Get current CPF balances
+  const oaBalance = parseFloat(document.getElementById('oa-balance').value);
+  const saBalance = parseFloat(document.getElementById('sa-balance').value);
+  const maBalance = parseFloat(document.getElementById('ma-balance').value);
+  const totalCpf = oaBalance + saBalance + maBalance;
+
+  // Calculate retirement period
+  const retirementYears = lifeExpectancy - retirementAge;
+
+  // Future Value calculation (similar to Excel FV function)
+  const fvFactor = Math.pow(1 + returnRate, retirementYears);
+  const retirementSum = totalCpf * fvFactor;
+
+  // CPF Life payout calculation (based on Excel formulas)
+  let monthlyPayout = 0;
+  if (cpfLifePlan === 'standard') {
+    monthlyPayout = retirementSum / (retirementYears * 12 * 1.1); // Standard plan factor
+  } else if (cpfLifePlan === 'basic') {
+    monthlyPayout = retirementSum / (retirementYears * 12 * 1.2); // Basic plan factor
+  } else {
+    // Escalating plan with 2% annual increase
+    monthlyPayout = desiredPayout;
+  }
+
+  // Display results
+  const results = [
+    { label: 'Retirement Sum', value: retirementSum.toFixed(0), unit: '' },
+    { label: 'Retirement Period', value: retirementYears, unit: 'years' },
+    { label: 'Projected Payout', value: monthlyPayout.toFixed(0), unit: '/month' },
+    { label: 'Total Payouts', value: (monthlyPayout * 12 * retirementYears).toFixed(0), unit: '' },
+    { label: 'Shortfall/Gap', value: (desiredPayout - monthlyPayout).toFixed(0), unit: '' }
+  ];
+
+  displayResults(results, 'retirement-grid');
+  document.getElementById('retirement-results').style.display = 'block';
+  notify('Retirement projection completed!');
+}
+
+// Helper functions
+function displayResults(results, gridId) {
+  const grid = document.getElementById(gridId);
+  grid.innerHTML = results.map(r => `
+    <div class="result-card">
+      <div class="result-label">${r.label}</div>
+      <div style="display:flex;align-items:baseline;gap:4px">
+        <div class="result-value">S$${r.value}</div>
+        <div class="result-unit">${r.unit}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function updateSliderValue() {
+  const slider = document.getElementById('payout-slider');
+  const value = document.getElementById('slider-value');
+  const input = document.getElementById('desired-payout');
+  const val = slider.value;
+  value.textContent = `S$${val}`;
+  input.value = val;
+}
+
+// Navigation
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  document.getElementById('nav-' + id).classList.add('active');
+}
+
+function notify(msg) {
+  const n = document.getElementById('notif');
+  n.textContent = msg;
+  n.classList.add('show');
+  setTimeout(() => n.classList.remove('show'), 2500);
+}
+
+// Initialize
+document.getElementById('payout-slider').value = document.getElementById('desired-payout').value;
+updateSliderValue();
+</script>
+</body>
+</html>
