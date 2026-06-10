@@ -1313,20 +1313,6 @@ updateSliderValue();
 // Add event listener for age input
 document.getElementById('age').addEventListener('input', updateAllocationRates);
 
-// Close mobile menu when navigating between panels
-function showPanel(id) {
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('panel-' + id).classList.add('active');
-  document.getElementById('nav-' + id).classList.add('active');
-
-  // Close mobile menu on navigation
-  const sidebar = document.getElementById('sidebar');
-  const overlay = document.querySelector('.mobile-overlay');
-  if (sidebar.classList.contains('show')) {
-    toggleMobileMenu();
-  }
-}
 
 // Close mobile menu when navigating between panels
 function showPanel(id) {
