@@ -185,9 +185,20 @@ textarea.form-input{resize:vertical;min-height:70px}
 .comp-table th{text-align:left;padding:8px 12px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--border)}
 .comp-table td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--white)}
 .comp-table tr:last-child td{border-bottom:none}
-.comp-table .bad{color:#FCA5A5}
-.comp-table .good{color:#6EE7B7}
-</style>
+	.comp-table .bad{color:#FCA5A5}
+	.comp-table .good{color:#6EE7B7}
+
+	/* MODAL */
+	.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}
+	.modal-overlay.show{display:flex}
+	.modal{background:var(--navy2);border:1px solid var(--border);border-radius:var(--radius-lg);width:100%;max-width:600px;max-height:90vh;overflow-y:auto;padding:24px;position:relative}
+	.modal-close{position:absolute;top:16px;right:16px;cursor:pointer;font-size:20px;color:var(--muted)}
+	
+	/* SEGMENT MANAGEMENT */
+	.seg-card .seg-actions{position:absolute;top:8px;right:8px;display:none;gap:4px}
+	.seg-card:hover .seg-actions{display:flex}
+	.btn-icon{width:24px;height:24px;padding:0;justify-content:center;border-radius:4px;font-size:12px}
+	</style>
 </head>
 <body>
 
@@ -245,12 +256,13 @@ textarea.form-input{resize:vertical;min-height:70px}
 
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
     <span style="font-size:12px;color:var(--muted)">Filter:</span>
-    <button class="btn btn-sm btn-primary" onclick="filterSegs('all')" id="f-all">All 15</button>
+    <button class="btn btn-sm btn-primary" onclick="filterSegs('all')" id="f-all">All</button>
     <button class="btn btn-sm btn-ghost" onclick="filterSegs('protection')" id="f-protection">Protection</button>
     <button class="btn btn-sm btn-ghost" onclick="filterSegs('wealth')" id="f-wealth">Wealth</button>
     <button class="btn btn-sm btn-ghost" onclick="filterSegs('retirement')" id="f-retirement">Retirement</button>
     <button class="btn btn-sm btn-ghost" onclick="filterSegs('medical')" id="f-medical">Medical</button>
     <button class="btn btn-sm btn-ghost" onclick="filterSegs('legacy')" id="f-legacy">Legacy</button>
+    <button class="btn btn-sm btn-primary" style="margin-left:auto;background:var(--purple)" onclick="openCreateModal()">+ Create New</button>
   </div>
 
   <div id="seg-grid" class="seg-grid"></div>
@@ -629,6 +641,68 @@ textarea.form-input{resize:vertical;min-height:70px}
 
 <div class="notif" id="notif"></div>
 
+<!-- CREATE MODAL -->
+<div class="modal-overlay" id="modal-create">
+  <div class="modal">
+    <span class="modal-close" onclick="closeCreateModal()">×</span>
+    <div style="font-size:18px;font-weight:700;margin-bottom:4px" id="modal-title">Create New Client Segment</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:20px">Define a new profile to scale your analytics tool</div>
+    
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Segment Name</label>
+        <input class="form-input" id="new-name" placeholder="e.g. High Net Worth">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Icon (Emoji)</label>
+        <input class="form-input" id="new-icon" placeholder="💎">
+      </div>
+    </div>
+    
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Priority</label>
+        <select class="form-input" id="new-priority">
+          <option value="protection">Protection</option>
+          <option value="wealth">Wealth</option>
+          <option value="retirement">Retirement</option>
+          <option value="medical">Medical</option>
+          <option value="legacy">Legacy</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Age Range</label>
+        <input class="form-input" id="new-age" placeholder="e.g. 40–60">
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">Income Range</label>
+      <input class="form-input" id="new-income" placeholder="e.g. S$20k–50k/mo">
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">Profile Description</label>
+      <textarea class="form-input" id="new-profile" placeholder="Describe the typical client in this segment..."></textarea>
+    </div>
+    
+    <div class="form-group">
+      <label class="form-label">Key Needs (one per line)</label>
+      <textarea class="form-input" id="new-needs" placeholder="Need 1&#10;Need 2..."></textarea>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Discovery Questions (one per line)</label>
+      <textarea class="form-input" id="new-questions" placeholder="Question 1&#10;Question 2..."></textarea>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:10px">
+      <button class="btn btn-ghost" onclick="closeCreateModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveNewSegment()">Save Segment</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ═══════════════════════════════════════════════════════════
 // DATA
@@ -802,10 +876,15 @@ const DEFAULT_STATE = {
   gapsChecked: {},
   policiesChecked: {},
   contactLog: [],
-  selectedObjection: null
+  selectedObjection: null,
+  customSegments: []
 };
 
 let state = { ...DEFAULT_STATE };
+
+function getAllSegments() {
+  return [...SEGMENTS, ...state.customSegments];
+}
 
 function saveState() {
   localStorage.setItem('finplan_ai_state', JSON.stringify(state));
@@ -815,8 +894,10 @@ function loadState() {
   const saved = localStorage.getItem('finplan_ai_state');
   if (saved) {
     try {
-      state = JSON.parse(saved);
+      const loaded = JSON.parse(saved);
+      state = { ...DEFAULT_STATE, ...loaded };
       // Re-render based on loaded state
+      renderSegGrid();
       if (state.selectedSeg !== null) {
         selectSegment(state.selectedSeg);
         if (state.meetingStep > 0) renderMeeting();
@@ -827,6 +908,57 @@ function loadState() {
       state = { ...DEFAULT_STATE };
     }
   }
+}
+
+function openCreateModal() {
+  document.getElementById('modal-create').classList.add('show');
+}
+
+function closeCreateModal() {
+  document.getElementById('modal-create').classList.remove('show');
+}
+
+function saveNewSegment() {
+  const name = document.getElementById('new-name').value;
+  const icon = document.getElementById('new-icon').value || '👤';
+  const priority = document.getElementById('new-priority').value;
+  const age = document.getElementById('new-age').value;
+  const income = document.getElementById('new-income').value;
+  const profile = document.getElementById('new-profile').value;
+  const needs = document.getElementById('new-needs').value.split('\n').filter(l => l.trim());
+  const questions = document.getElementById('new-questions').value.split('\n').filter(l => l.trim());
+
+  if (!name) { notify('Please enter a segment name'); return; }
+
+  const newSeg = {
+    id: Date.now(), // Unique ID
+    name, icon, priority, age, income, profile, needs, questions,
+    gaps: [], products: [], objections: [] // Simplified for now
+  };
+
+  state.customSegments.push(newSeg);
+  saveState();
+  renderSegGrid();
+  closeCreateModal();
+  notify('New segment created ✓');
+  
+  // Clear form
+  ['new-name','new-icon','new-age','new-income','new-profile','new-needs','new-questions'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+}
+
+function deleteSegment(e, id) {
+  e.stopPropagation();
+  if (!confirm('Are you sure you want to delete this custom segment?')) return;
+  state.customSegments = state.customSegments.filter(s => s.id !== id);
+  if (state.selectedSeg === id) {
+    state.selectedSeg = null;
+    document.getElementById('seg-detail').style.display = 'none';
+  }
+  saveState();
+  renderSegGrid();
+  notify('Segment deleted');
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -855,10 +987,14 @@ function priorityTagClass(p) {
 
 function renderSegGrid(filter='all') {
   const grid = document.getElementById('seg-grid');
-  const filtered = filter==='all' ? SEGMENTS : SEGMENTS.filter(s=>s.priority===filter);
+  const all = getAllSegments();
+  const filtered = filter==='all' ? all : all.filter(s=>s.priority===filter);
   grid.innerHTML = filtered.map(s => `
     <div class="seg-card ${state.selectedSeg===s.id?'selected':''}" onclick="selectSegment(${s.id})">
-      <div class="seg-icon" style="background:${s.color}22">${s.icon}</div>
+      <div class="seg-actions">
+        ${s.id >= 1000 ? `<button class="btn btn-icon btn-danger" onclick="deleteSegment(event, ${s.id})">×</button>` : ''}
+      </div>
+      <div class="seg-icon" style="background:${s.color || '#334155'}22">${s.icon}</div>
       <div class="seg-name">${s.name}</div>
       <div class="seg-age">${s.age} · ${s.income}</div>
       <div style="margin-top:8px"><span class="tag ${priorityTagClass(s.priority)}">${s.priority}</span></div>
@@ -875,7 +1011,9 @@ function filterSegs(f) {
 function selectSegment(id) {
   state.selectedSeg = id;
   saveState();
-  const seg = SEGMENTS[id];
+  const all = getAllSegments();
+  const seg = all.find(s => s.id === id);
+  if (!seg) return;
   renderSegGrid();
   document.getElementById('seg-detail').style.display = 'block';
 
@@ -918,7 +1056,9 @@ function startMeeting() {
 // MEETING PLANNER
 // ═══════════════════════════════════════════════════════════
 function renderMeeting() {
-  const seg = SEGMENTS[state.selectedSeg];
+  const all = getAllSegments();
+  const seg = all.find(s => s.id === state.selectedSeg);
+  if (!seg) return;
   document.getElementById('meeting-no-client').style.display = 'none';
   document.getElementById('meeting-content').style.display = 'block';
   document.getElementById('client-banner').style.display = 'flex';
@@ -945,7 +1085,8 @@ function renderMeeting() {
 }
 
 function renderDiscovery() {
-  const seg = SEGMENTS[state.selectedSeg];
+  const all = getAllSegments();
+  const seg = all.find(s => s.id === state.selectedSeg);
   document.getElementById('m-questions').innerHTML = seg.questions.map((q,i) => `
     <div class="check-item">
       <input type="checkbox" ${state.questionsChecked[i]?'checked':''} onchange="toggleQ(${i})">
@@ -956,7 +1097,8 @@ function renderDiscovery() {
 function toggleQ(i) { state.questionsChecked[i] = !state.questionsChecked[i]; saveState(); }
 
 function renderNeeds() {
-  const seg = SEGMENTS[state.selectedSeg];
+  const all = getAllSegments();
+  const seg = all.find(s => s.id === state.selectedSeg);
   document.getElementById('m-needs').innerHTML = seg.needs.map((n,i) => `
     <div class="check-item">
       <input type="checkbox" ${state.needsChecked[i]?'checked':''} onchange="toggleNeed(${i})">
@@ -967,7 +1109,8 @@ function renderNeeds() {
 function toggleNeed(i) { state.needsChecked[i] = !state.needsChecked[i]; saveState(); }
 
 function renderGapScore() {
-  const seg = SEGMENTS[state.selectedSeg];
+  const all = getAllSegments();
+  const seg = all.find(s => s.id === state.selectedSeg);
   const total = seg.needs.length;
   const covered = Object.values(state.needsChecked).filter(Boolean).length;
   const pct = Math.round((covered/total)*100);
@@ -1002,8 +1145,9 @@ function renderGapScore() {
 function toggleGap(i) { state.gapsChecked[i] = !state.gapsChecked[i]; }
 
 function renderObjections() {
-  const seg = SEGMENTS[state.selectedSeg];
-  document.getElementById('m-objections').innerHTML = seg.objections.map((o,i) => `
+  const all = getAllSegments();
+  const seg = all.find(s => s.id === state.selectedSeg);
+  document.getElementById('m-objections').innerHTML = (seg.objections || []).map((o,i) => `
     <div class="obj-card" id="obj-${i}" onclick="toggleObj(${i})">
       <div class="obj-quote">"${o.q}"</div>
       <div style="font-size:11px;color:var(--teal2);margin-bottom:6px">▶ Click to reveal response</div>
@@ -1042,7 +1186,8 @@ function buildRecommendation() {
 // RECOMMENDATION
 // ═══════════════════════════════════════════════════════════
 function renderRecommendation() {
-  const seg = SEGMENTS[state.selectedSeg];
+  const all = getAllSegments();
+  const seg = all.find(s => s.id === state.selectedSeg);
   const name = state.clientName || 'Client';
   const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
 
@@ -1081,7 +1226,7 @@ function renderRecommendation() {
   document.getElementById('rec-cover-good').textContent = 'Provides basic death/TPD protection. Keep in force — do not replace, only supplement.';
   document.getElementById('rec-cover-bad').textContent = 'No CI, no disability income, no business-specific coverage. Under-insured relative to obligations.';
 
-  document.getElementById('rec-plan').innerHTML = seg.products.map((p,i)=>`
+  document.getElementById('rec-plan').innerHTML = (seg.products || []).map((p,i)=>`
     <div class="policy-row">
       <span class="priority-chip p${p.p}">P${p.p}</span>
       <div class="policy-info">
@@ -1114,7 +1259,8 @@ function renderRecommendation() {
     </div>`).join('');
 
   // Update sidebar
-  const seg2 = SEGMENTS[state.selectedSeg];
+  const all = getAllSegments();
+  const seg2 = all.find(s => s.id === state.selectedSeg);
   document.getElementById('sb-name').textContent = name;
   document.getElementById('sb-segment').textContent = seg2.name;
   document.getElementById('sb-avatar').textContent = initials;
@@ -1125,7 +1271,8 @@ function renderRecommendation() {
 // ═══════════════════════════════════════════════════════════
 function showServicing() {
   if (state.selectedSeg === null) return;
-  const seg = SEGMENTS[state.selectedSeg];
+  const all = getAllSegments();
+  const seg = all.find(s => s.id === state.selectedSeg);
   const name = state.clientName || 'Client';
   const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
 
@@ -1157,13 +1304,14 @@ function showServicing() {
 
 function renderPolicies() {
   if (state.selectedSeg === null) return;
-  const seg = SEGMENTS[state.selectedSeg];
+  const all = getAllSegments();
+  const seg = all.find(s => s.id === state.selectedSeg);
   const placed = Object.values(state.policiesChecked).filter(Boolean).length;
   document.getElementById('srv-active').textContent = placed;
-  document.getElementById('srv-gaps').textContent = seg.products.length - placed;
-  document.getElementById('srv-gaps').style.color = (seg.products.length-placed)>0?'var(--red)':'var(--green)';
+  document.getElementById('srv-gaps').textContent = (seg.products || []).length - placed;
+  document.getElementById('srv-gaps').style.color = ((seg.products || []).length-placed)>0?'var(--red)':'var(--green)';
 
-  document.getElementById('srv-policies').innerHTML = seg.products.map((p,i)=>`
+  document.getElementById('srv-policies').innerHTML = (seg.products || []).map((p,i)=>`
     <div class="policy-row">
       <div class="policy-check ${state.policiesChecked[i]?'done':''}" onclick="togglePolicy(${i})">${state.policiesChecked[i]?'✓':''}</div>
       <div class="policy-info">
@@ -1186,7 +1334,8 @@ function togglePolicy(i) {
 // ═══════════════════════════════════════════════════════════
 function showFollowup() {
   if (state.selectedSeg === null) return;
-  const seg = SEGMENTS[state.selectedSeg];
+  const all = getAllSegments();
+  const seg = all.find(s => s.id === state.selectedSeg);
   const name = state.clientName || 'Client';
   const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
 
