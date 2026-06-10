@@ -6,7 +6,7 @@
 <title>CPF & Retirement Calculator</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
+* {margin:0;padding:0;box-sizing:border-box}
 :root{
   --navy:#0F172A;--navy2:#1E293B;--navy3:#334155;
   --teal:#0D9488;--teal2:#14B8A6;--teal3:#CCFBF1;
@@ -15,11 +15,11 @@
   --red:#EF4444;--amber:#F59E0B;--green:#10B981;--purple:#8B5CF6;--blue:#3B82F6;--pink:#EC4899;
   --radius:10px;--radius-lg:16px;
 }
-html,body{height:100%;background:var(--navy);color:var(--white);font-family:'Inter',sans-serif;font-size:14px;overflow:hidden}
+html,body{height:100%;background:var(--navy);color:var(--white);font-family:'Inter',sans-serif;font-size:14px;overflow-x:hidden}
 
-#app{display:flex;height:100vh}
-#sidebar{width:220px;background:var(--navy2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
-#main{flex:1;overflow-y:auto;background:var(--navy)}
+#app{display:flex;height:100vh;overflow:hidden}
+#sidebar{width:220px;background:var(--navy2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transform:translateX(0);transition:transform 0.3s ease;z-index:100}
+#main{flex:1;overflow-y:auto;background:var(--navy);transition:all 0.3s ease}
 
 .brand{padding:20px 20px 16px;border-bottom:1px solid var(--border)}
 .brand-name{font-size:15px;font-weight:700;color:var(--white);letter-spacing:-.3px}
@@ -68,6 +68,52 @@ textarea.form-input{resize:vertical;min-height:70px}
 
 .notif{position:fixed;bottom:24px;right:24px;background:var(--teal);color:var(--white);padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;opacity:0;transform:translateY(10px);transition:all .3s;z-index:999;pointer-events:none}
 .notif.show{opacity:1;transform:translateY(0)}
+
+/* Mobile Menu Toggle */
+.mobile-menu-toggle{display:none;position:fixed;top:16px;left:16px;z-index:101;background:var(--navy2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer;font-size:18px;color:var(--white)}
+.mobile-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:99;opacity:0;transition:opacity .3s}
+
+/* Responsive Design for Mobile */
+@media (max-width: 768px) {
+  :root{font-size:13px}
+
+  /* Mobile layout - stack sidebar on top when closed */
+  #app{flex-direction:column}
+  #sidebar{position:fixed;top:0;left:0;width:100%;height:100vh;transform:translateX(-100%);overflow-y:auto}
+  #sidebar.show{transform:translateX(0)}
+  #main{width:100%;padding-bottom:20px}
+
+  .mobile-menu-toggle{display:block}
+  .mobile-overlay.show{display:block;opacity:1}
+
+  /* Adjust panel padding for mobile */
+  .panel{padding:16px 16px 80px}
+
+  /* Mobile-friendly grid layouts */
+  .grid-2,.grid-3{grid-template-columns:1fr}
+  .cpf-result-grid{grid-template-columns:1fr}
+
+  /* Larger touch targets */
+  .nav-item{padding:12px 16px;font-size:14px}
+  .btn{padding:12px 24px;font-size:14px}
+  .form-input{padding:12px 14px;font-size:14px}
+
+  /* Adjust card spacing */
+  .card{padding:16px}
+  .result-card{padding:14px}
+
+  /* Larger text for readability */
+  .panel-title{font-size:20px}
+  .cpf-title{font-size:15px}
+  .result-value{font-size:17px}
+
+  /* Better spacing for mobile */
+  .form-group{margin-bottom:14px}
+  .cpf-section{margin-bottom:20px}
+
+  /* Mobile notification positioning */
+  .notif{bottom:80px;right:16px;left:16px;width:auto;margin:0 20px}
+}
 
 #main::-webkit-scrollbar{width:6px}
 #main::-webkit-scrollbar-track{background:transparent}
@@ -122,6 +168,10 @@ textarea.form-input{resize:vertical;min-height:70px}
 <body>
 
 <div id="app">
+<!-- MOBILE MENU TOGGLE -->
+<button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+<div class="mobile-overlay" onclick="toggleMobileMenu()"></div>
+
 <!-- SIDEBAR -->
 <div id="sidebar">
   <div class="brand">
@@ -776,12 +826,44 @@ function validateAllocation() {
   }
 }
 
+// Mobile menu toggle function
+function toggleMobileMenu() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.querySelector('.mobile-overlay');
+  const body = document.body;
+
+  sidebar.classList.toggle('show');
+  overlay.classList.toggle('show');
+
+  // Prevent scrolling when menu is open
+  if (sidebar.classList.contains('show')) {
+    body.style.overflow = 'hidden';
+  } else {
+    body.style.overflow = '';
+  }
+}
+
 // Initialize
 document.getElementById('payout-slider').value = document.getElementById('desired-payout').value;
 updateSliderValue();
 
 // Add event listener for age input
 document.getElementById('age').addEventListener('input', updateAllocationRates);
+
+// Close mobile menu when navigating between panels
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  document.getElementById('nav-' + id).classList.add('active');
+
+  // Close mobile menu on navigation
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.querySelector('.mobile-overlay');
+  if (sidebar.classList.contains('show')) {
+    toggleMobileMenu();
+  }
+}
 </script>
 </body>
 </html>

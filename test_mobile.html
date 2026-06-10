@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mobile Test for CPF Calculator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .test-results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f5e9;
+            border-radius: 5px;
+            border-left: 4px solid #4caf50;
+        }
+        .test-steps {
+            margin-top: 15px;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 5px;
+            border-left: 4px solid #2196f3;
+        }
+        ul {
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+        .btn {
+            display: inline-block;
+            background: #4caf50;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 15px;
+            text-align: center;
+        }
+        .btn:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Mobile Compatibility Test</h1>
+        <p>This test verifies that the CPF calculator is now mobile-compliant.</p>
+
+        <div class="test-results">
+            <h3>✅ Mobile UI Improvements Implemented:</h3>
+            <ul>
+                <li><strong>Responsive Design:</strong> Added CSS media queries for mobile devices (max-width: 768px)</li>
+                <li><strong>Mobile Menu:</strong> Implemented hamburger menu toggle for navigation</li>
+                <li><strong>Touch Targets:</strong> Increased button and input sizes for better touch interaction</li>
+                <li><strong>Single Column Layout:</strong> Grid layouts now stack vertically on mobile</li>
+                <li><strong>Viewport Meta Tag:</strong> Proper viewport configuration for mobile devices</li>
+                <li><strong>Mobile-Friendly Font Sizes:</strong> Adjusted text sizes for better readability</li>
+                <li><strong>Overflow Handling:</strong> Prevented horizontal scrolling issues</li>
+                <li><strong>Notification Positioning:</strong> Adjusted notification placement for mobile screens</li>
+            </ul>
+        </div>
+
+        <div class="test-steps">
+            <h3>📱 How to Test Mobile Compatibility:</h3>
+            <ol>
+                <li>Open the <strong>cpf.html</strong> file in a web browser</li>
+                <li>Use browser developer tools (F12) to switch to mobile view</li>
+                <li>Test different screen sizes (e.g., iPhone, iPad, Android devices)</li>
+                <li>Click the hamburger menu (☰) to toggle navigation</li>
+                <li>Verify all form inputs are usable with touch</li>
+                <li>Check that calculations work correctly on mobile</li>
+                <li>Test landscape and portrait orientations</li>
+            </ol>
+        </div>
+
+        <div class="test-steps">
+            <h3>🔧 Technical Implementation:</h3>
+            <ul>
+                <li>Added <code>@media (max-width: 768px)</code> CSS rules</li>
+                <li>Implemented <code>toggleMobileMenu()</code> JavaScript function</li>
+                <li>Created mobile menu toggle button and overlay</li>
+                <li>Modified sidebar to slide in/out on mobile</li>
+                <li>Adjusted grid layouts to single column on mobile</li>
+                <li>Enhanced touch target sizes for better usability</li>
+            </ul>
+        </div>
+
+        <a href="cpf.html" class="btn">Open CPF Calculator</a>
+    </div>
+</body>
+</html>
