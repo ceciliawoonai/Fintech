@@ -399,35 +399,49 @@ function calculateCPF() {
   );
 
   if (age >= 55) {
-    // For ages 55+, show RA instead of SA
+    // For ages 55+, show RA instead of SA (SA is closed at 55)
     results.push(
-      { label: 'OA Contribution', value: oaContribution.toFixed(2), unit: '' },
-      { label: 'RA Contribution', value: saContribution.toFixed(2), unit: '' },
-      { label: 'MA Contribution', value: maContribution.toFixed(2), unit: '' },
-      { label: 'Projected OA at 65', value: projectedOa.toFixed(0), unit: '' },
-      { label: 'Projected RA at 65', value: projectedRa.toFixed(0), unit: '' },
-      { label: 'Projected MA at 65', value: projectedMa.toFixed(0), unit: '' },
-      { label: 'Total CPF at 65', value: (projectedOa + projectedRa + projectedMa).toFixed(0), unit: '' }
+      { label: 'OA Contribution', value: oaContribution.toFixed(2), unit: '', class: 'contribution' },
+      { label: 'RA Contribution', value: saContribution.toFixed(2), unit: '', class: 'contribution' },
+      { label: 'MA Contribution', value: maContribution.toFixed(2), unit: '', class: 'contribution' },
+      { label: 'Projected OA at 65', value: projectedOa.toFixed(0), unit: '', class: 'projection' },
+      { label: 'Projected RA at 65', value: projectedRa.toFixed(0), unit: '', class: 'projection' },
+      { label: 'Projected MA at 65', value: projectedMa.toFixed(0), unit: '', class: 'projection' },
+      { label: 'Total CPF at 65', value: (projectedOa + projectedRa + projectedMa).toFixed(0), unit: '', class: 'summary' }
     );
 
     // Add FRS status information
     const frsStatus = raBalance >= FRS_2026 ? 'REACHED' : 'NOT REACHED';
     const frsProgress = ((raBalance / FRS_2026) * 100).toFixed(1) + '%';
     results.push(
-      { label: 'FRS Status', value: frsStatus, unit: '' },
-      { label: 'FRS Progress', value: frsProgress, unit: '' },
-      { label: 'FRS Exception Applied', value: frsExceptionApplied ? 'YES' : 'NO', unit: '' }
+      { label: 'FRS Status', value: frsStatus, unit: '', class: 'summary' },
+      { label: 'FRS Progress', value: frsProgress, unit: '', class: 'summary' },
+      { label: 'FRS Exception Applied', value: frsExceptionApplied ? 'YES' : 'NO', unit: '', class: 'summary' }
     );
   } else {
-    // For ages < 55, show standard SA
+    // For ages < 55, show standard SA (but also show what happens at 55+)
     results.push(
-      { label: 'OA Contribution', value: oaContribution.toFixed(2), unit: '' },
-      { label: 'SA Contribution', value: saContribution.toFixed(2), unit: '' },
-      { label: 'MA Contribution', value: maContribution.toFixed(2), unit: '' },
-      { label: 'Projected OA at 65', value: projectedOa.toFixed(0), unit: '' },
-      { label: 'Projected SA at 65', value: projectedSa.toFixed(0), unit: '' },
-      { label: 'Projected MA at 65', value: projectedMa.toFixed(0), unit: '' },
-      { label: 'Total CPF at 65', value: (projectedOa + projectedSa + projectedMa).toFixed(0), unit: '' }
+      { label: 'OA Contribution', value: oaContribution.toFixed(2), unit: '', class: 'contribution' },
+      { label: 'SA Contribution', value: saContribution.toFixed(2), unit: '', class: 'contribution' },
+      { label: 'MA Contribution', value: maContribution.toFixed(2), unit: '', class: 'contribution' },
+      { label: 'Projected OA at 54', value: projectedOa.toFixed(0), unit: '', class: 'projection' },
+      { label: 'Projected SA at 54', value: projectedSa.toFixed(0), unit: '', class: 'projection' },
+      { label: 'Projected MA at 54', value: projectedMa.toFixed(0), unit: '', class: 'projection' },
+      { label: 'Total CPF at 54', value: (projectedOa + projectedSa + projectedMa).toFixed(0), unit: '', class: 'summary' }
+    );
+
+    // Show projected values at 65 (after SA->RA conversion)
+    const yearsFrom55To65 = 10;
+    const saToRaConversion = projectedSa; // SA balance at 55 gets converted to RA
+    const raAt65 = (saToRaConversion * Math.pow(annualGrowth, yearsFrom55To65)) + (saContribution * 12 * ((Math.pow(annualGrowth, yearsFrom55To65) - 1) / (annualGrowth - 1) * annualGrowth));
+    const oaAt65 = projectedOa * Math.pow(annualGrowth, yearsFrom55To65);
+    const maAt65 = projectedMa * Math.pow(annualGrowth, yearsFrom55To65);
+
+    results.push(
+      { label: 'Projected OA at 65', value: oaAt65.toFixed(0), unit: '', class: 'projection' },
+      { label: 'Projected RA at 65', value: raAt65.toFixed(0), unit: '', class: 'projection' },
+      { label: 'Projected MA at 65', value: maAt65.toFixed(0), unit: '', class: 'projection' },
+      { label: 'Total CPF at 65', value: (oaAt65 + raAt65 + maAt65).toFixed(0), unit: '', class: 'summary' }
     );
   }
 
