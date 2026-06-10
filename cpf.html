@@ -163,6 +163,9 @@ textarea.form-input{resize:vertical;min-height:70px}
         <div class="cpf-title">CPF Allocation</div>
         <div class="cpf-strategy" id="strategy-label" style="font-size:12px;color:var(--teal2);font-weight:500">🏠 Maximizing housing runway</div>
       </div>
+      <div id="frs-status-indicator" style="display:none;margin-top:8px;padding:8px 12px;background:rgba(255,255,255,.05);border-left:3px solid var(--amber);border-radius:6px;font-size:12px;">
+        <strong>🔒 FRS Exception Active:</strong> RA balance has reached Full Retirement Sum (S$205,800). Excess contributions are being channeled to OA.
+      </div>
 
       <div class="grid-3">
         <div class="form-group">
@@ -299,9 +302,18 @@ function calculateCPF() {
 
   // Calculate monthly contributions (Excel formula logic)
   const totalContribution = salary * contributionRate;
-  const oaContribution = totalContribution * (oaPercent / 100);
-  const saContribution = totalContribution * (saPercent / 100);
+  let oaContribution = totalContribution * (oaPercent / 100);
+  let saContribution = totalContribution * (saPercent / 100);
   const maContribution = totalContribution * (maPercent / 100);
+
+  // Apply 2026 FRS Exception Rule for ages 55+
+  let frsExceptionApplied = false;
+  if (age >= 55 && raBalance >= FRS_2026) {
+    // If RA has reached FRS, channel all RA contributions to OA
+    oaContribution += saContribution;
+    saContribution = 0;
+    frsExceptionApplied = true;
+  }
 
   // Project balances with 3.5% annual growth (from Excel formulas)
   const annualGrowth = 1.035;
@@ -309,7 +321,7 @@ function calculateCPF() {
   const projectedOa = oaBalance + (oaContribution * 12 * ((Math.pow(annualGrowth, yearsToRetirement) - 1) / (annualGrowth - 1)));
   const projectedSa = saBalance + (saContribution * 12 * ((Math.pow(annualGrowth, yearsToRetirement) - 1) / (annualGrowth - 1)));
   const projectedMa = maBalance + (maContribution * 12 * ((Math.pow(annualGrowth, yearsToRetirement) - 1) / (annualGrowth - 1)));
-  const projectedRa = raBalance + (saContribution * 12 * ((Math.pow(annualGrowth, yearsToRetirement) - 1) / (annualGrowth - 1)));
+  const projectedRa = Math.min(raBalance + (saContribution * 12 * ((Math.pow(annualGrowth, yearsToRetirement) - 1) / (annualGrowth - 1))), FRS_2026);
 
   // Display results based on age
   const results = [];
@@ -324,6 +336,15 @@ function calculateCPF() {
       { label: 'Projected RA at 65', value: projectedRa.toFixed(0), unit: '' },
       { label: 'Projected MA at 65', value: projectedMa.toFixed(0), unit: '' },
       { label: 'Total CPF at 65', value: (projectedOa + projectedRa + projectedMa).toFixed(0), unit: '' }
+    );
+
+    // Add FRS status information
+    const frsStatus = raBalance >= FRS_2026 ? 'REACHED' : 'NOT REACHED';
+    const frsProgress = ((raBalance / FRS_2026) * 100).toFixed(1) + '%';
+    results.push(
+      { label: 'FRS Status', value: frsStatus, unit: '' },
+      { label: 'FRS Progress', value: frsProgress, unit: '' },
+      { label: 'FRS Exception Applied', value: frsExceptionApplied ? 'YES' : 'NO', unit: '' }
     );
   } else {
     // For ages < 55, show standard SA
@@ -341,7 +362,18 @@ function calculateCPF() {
 
   displayResults(results, 'results-grid');
   document.getElementById('cpf-results').style.display = 'block';
-  notify('CPF calculation completed!');
+
+  // Show appropriate notification
+  if (age >= 55 && frsExceptionApplied) {
+    notify('FRS reached! Excess contributions channeled to OA.');
+    document.getElementById('frs-status-indicator').style.display = 'block';
+  } else if (age >= 55) {
+    notify('CPF calculation completed with RA allocation.');
+    document.getElementById('frs-status-indicator').style.display = 'none';
+  } else {
+    notify('CPF calculation completed!');
+    document.getElementById('frs-status-indicator').style.display = 'none';
+  }
 }
 
 // Retirement Projection Functions (Excel-based logic)
