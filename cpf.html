@@ -193,13 +193,30 @@ textarea.form-input{resize:vertical;min-height:70px}
           <label class="form-label">OA Balance (S$)</label>
           <input type="number" id="oa-balance" class="form-input" value="50000" min="0">
         </div>
-        <div class="form-group">
+        <div class="form-group" id="sa-balance-group">
           <label class="form-label">SA Balance (S$)</label>
           <input type="number" id="sa-balance" class="form-input" value="30000" min="0">
         </div>
         <div class="form-group">
           <label class="form-label">MA Balance (S$)</label>
           <input type="number" id="ma-balance" class="form-input" value="20000" min="0">
+        </div>
+      </div>
+    </div>
+
+    <div class="cpf-section">
+      <div class="cpf-header">
+        <div class="cpf-title">Additional Wage Information</div>
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">AWS + Bonus (S$)</label>
+          <input type="number" id="aws-bonus" class="form-input" value="0" min="0" step="100">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Number of Months</label>
+          <input type="number" id="bonus-months" class="form-input" value="1" min="1" max="12">
         </div>
       </div>
     </div>
@@ -300,11 +317,27 @@ function calculateCPF() {
   const maBalance = parseFloat(document.getElementById('ma-balance').value);
   const raBalance = parseFloat(document.getElementById('ra-balance')?.value || 0);
 
+  // Get AWS+Bonus information
+  const awsBonus = parseFloat(document.getElementById('aws-bonus')?.value || 0);
+  const bonusMonths = parseInt(document.getElementById('bonus-months')?.value || 1);
+
+  // Calculate annual gross wage and additional wage components
+  const annualSalary = salary * 12;
+  const annualBonus = awsBonus * bonusMonths;
+  const grossAnnualWage = annualSalary + annualBonus;
+
   // Calculate monthly contributions (Excel formula logic)
   const totalContribution = salary * contributionRate;
   let oaContribution = totalContribution * (oaPercent / 100);
   let saContribution = totalContribution * (saPercent / 100);
   const maContribution = totalContribution * (maPercent / 100);
+
+  // Calculate employee and employer contributions (assuming standard split)
+  const employeeContributionRate = age <= 55 ? 0.2 : (age <= 60 ? 0.17 : (age <= 65 ? 0.115 : (age <= 70 ? 0.075 : 0.05)));
+  const employerContributionRate = contributionRate - employeeContributionRate;
+
+  const employeeContribution = salary * employeeContributionRate;
+  const employerContribution = salary * employerContributionRate;
 
   // Apply 2026 FRS Exception Rule for ages 55+
   let frsExceptionApplied = false;
@@ -325,10 +358,20 @@ function calculateCPF() {
 
   // Display results based on age
   const results = [];
+
+  // Add wage and contribution summary for all ages
+  results.push(
+    { label: 'Gross Annual Wage', value: grossAnnualWage.toFixed(0), unit: '' },
+    { label: 'Annual Salary', value: annualSalary.toFixed(0), unit: '' },
+    { label: 'Annual Bonus', value: annualBonus.toFixed(0), unit: '' },
+    { label: 'Employee Contribution', value: employeeContribution.toFixed(2), unit: '' },
+    { label: 'Employer Contribution', value: employerContribution.toFixed(2), unit: '' },
+    { label: 'Total Monthly Contribution', value: totalContribution.toFixed(2), unit: '' }
+  );
+
   if (age >= 55) {
     // For ages 55+, show RA instead of SA
     results.push(
-      { label: 'Monthly Contribution', value: totalContribution.toFixed(2), unit: '' },
       { label: 'OA Contribution', value: oaContribution.toFixed(2), unit: '' },
       { label: 'RA Contribution', value: saContribution.toFixed(2), unit: '' },
       { label: 'MA Contribution', value: maContribution.toFixed(2), unit: '' },
@@ -349,7 +392,6 @@ function calculateCPF() {
   } else {
     // For ages < 55, show standard SA
     results.push(
-      { label: 'Monthly Contribution', value: totalContribution.toFixed(2), unit: '' },
       { label: 'OA Contribution', value: oaContribution.toFixed(2), unit: '' },
       { label: 'SA Contribution', value: saContribution.toFixed(2), unit: '' },
       { label: 'MA Contribution', value: maContribution.toFixed(2), unit: '' },
@@ -520,6 +562,9 @@ function updateAllocationRates() {
     document.getElementById('sa-label').textContent = 'Retirement Account (%)';
     document.getElementById('sa-percent').value = RA_ALLOCATION_RATES[closestAge] || 0;
 
+    // Hide SA balance field for ages 55+
+    document.getElementById('sa-balance-group').style.display = 'none';
+
     // Add RA balance input if not exists
     if (!document.getElementById('ra-balance')) {
       addRetirementAccountFields();
@@ -527,6 +572,7 @@ function updateAllocationRates() {
   } else {
     // Show SA input
     document.getElementById('sa-label').textContent = 'Special Account (%)';
+    document.getElementById('sa-balance-group').style.display = 'block';
     removeRetirementAccountFields();
   }
 
