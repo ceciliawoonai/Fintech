@@ -371,19 +371,22 @@ function calculateCPF() {
     frsExceptionApplied = true;
   }
 
-  // Project balances with 3.5% annual growth (from Excel formulas)
-  // Fixed: Now properly compounds both current balances AND future contributions
-  const annualGrowth = 1.035;
+  // Project balances with correct interest rates (4.0% for SA/RA, 2.5% for OA, 4.0% for MA)
+  const saRaGrowth = 1.04;  // 4.0% for SA and RA
+  const oaGrowth = 1.025;    // 2.5% for OA
+  const maGrowth = 1.04;     // 4.0% for MA
   const yearsToRetirement = 65 - age;
 
-  // Future Value of Annuity Due formula for contributions: FV = PMT * ((1+r)^n - 1)/r * (1+r)
-  const annuityFactor = (Math.pow(annualGrowth, yearsToRetirement) - 1) / (annualGrowth - 1) * annualGrowth;
+  // Future Value of Annuity Due formula for contributions
+  const saAnnuityFactor = (Math.pow(saRaGrowth, yearsToRetirement) - 1) / (saRaGrowth - 1) * saRaGrowth;
+  const oaAnnuityFactor = (Math.pow(oaGrowth, yearsToRetirement) - 1) / (oaGrowth - 1) * oaGrowth;
+  const maAnnuityFactor = (Math.pow(maGrowth, yearsToRetirement) - 1) / (maGrowth - 1) * maGrowth;
 
-  // Compound current balances AND future contributions
-  const projectedOa = (oaBalance * Math.pow(annualGrowth, yearsToRetirement)) + (oaContribution * 12 * annuityFactor);
-  const projectedSa = (saBalance * Math.pow(annualGrowth, yearsToRetirement)) + (saContribution * 12 * annuityFactor);
-  const projectedMa = (maBalance * Math.pow(annualGrowth, yearsToRetirement)) + (maContribution * 12 * annuityFactor);
-  const projectedRa = Math.min((raBalance * Math.pow(annualGrowth, yearsToRetirement)) + (saContribution * 12 * annuityFactor), FRS_2026);
+  // Compound current balances AND future contributions with correct rates
+  const projectedOa = (oaBalance * Math.pow(oaGrowth, yearsToRetirement)) + (oaContribution * 12 * oaAnnuityFactor);
+  const projectedSa = (saBalance * Math.pow(saRaGrowth, yearsToRetirement)) + (saContribution * 12 * saAnnuityFactor);
+  const projectedMa = (maBalance * Math.pow(maGrowth, yearsToRetirement)) + (maContribution * 12 * maAnnuityFactor);
+  const projectedRa = Math.min((raBalance * Math.pow(saRaGrowth, yearsToRetirement)) + (saContribution * 12 * saAnnuityFactor), FRS_2026);
 
   // Display results based on age
   const results = [];
