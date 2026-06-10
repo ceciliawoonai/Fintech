@@ -163,15 +163,15 @@ textarea.form-input{resize:vertical;min-height:70px}
       <div class="grid-3">
         <div class="form-group">
           <label class="form-label">Ordinary Account (%)</label>
-          <input type="number" id="oa-percent" class="form-input" value="23" min="0" max="100">
+          <input type="number" id="oa-percent" class="form-input" value="23" min="0" max="100" onchange="validateAllocation()">
         </div>
         <div class="form-group">
           <label class="form-label">Special Account (%)</label>
-          <input type="number" id="sa-percent" class="form-input" value="6" min="0" max="100">
+          <input type="number" id="sa-percent" class="form-input" value="6" min="0" max="100" onchange="validateAllocation()">
         </div>
         <div class="form-group">
           <label class="form-label">MediSave Account (%)</label>
-          <input type="number" id="ma-percent" class="form-input" value="8" min="0" max="100">
+          <input type="number" id="ma-percent" class="form-input" value="8" min="0" max="100" onchange="validateAllocation()">
         </div>
       </div>
     </div>
@@ -406,9 +406,70 @@ function notify(msg) {
   setTimeout(() => n.classList.remove('show'), 2500);
 }
 
+// CPF Allocation Rates based on Age (from Excel CPF TB sheet)
+const CPF_ALLOCATION_RATES = {
+  // Age: [OA%, SA%, MA%]
+  20: [23, 6, 8],
+  25: [23, 6, 8],
+  30: [23, 6, 8],
+  35: [23, 6, 8],
+  40: [23, 6, 8],
+  45: [23, 6, 8],
+  50: [21, 8, 8],
+  55: [15, 13, 10],
+  60: [12, 15, 11],
+  65: [10, 17, 11]
+};
+
+// Auto-update allocation rates based on age
+function updateAllocationRates() {
+  const ageInput = document.getElementById('age');
+  const age = parseInt(ageInput.value);
+
+  // Find the closest age bracket
+  let closestAge = 35;
+  const ages = Object.keys(CPF_ALLOCATION_RATES).map(Number);
+
+  for (let i = 0; i < ages.length; i++) {
+    if (age <= ages[i]) {
+      closestAge = ages[i];
+      break;
+    }
+  }
+
+  const rates = CPF_ALLOCATION_RATES[closestAge];
+  document.getElementById('oa-percent').value = rates[0];
+  document.getElementById('sa-percent').value = rates[1];
+  document.getElementById('ma-percent').value = rates[2];
+
+  // Auto-calculate when age changes
+  calculateCPF();
+}
+
+// Validate that allocation percentages add up to 100%
+function validateAllocation() {
+  const oa = parseFloat(document.getElementById('oa-percent').value) || 0;
+  const sa = parseFloat(document.getElementById('sa-percent').value) || 0;
+  const ma = parseFloat(document.getElementById('ma-percent').value) || 0;
+  const total = oa + sa + ma;
+
+  if (total !== 100) {
+    document.getElementById('oa-percent').style.borderColor = 'var(--amber)';
+    document.getElementById('sa-percent').style.borderColor = 'var(--amber)';
+    document.getElementById('ma-percent').style.borderColor = 'var(--amber)';
+  } else {
+    document.getElementById('oa-percent').style.borderColor = 'var(--border)';
+    document.getElementById('sa-percent').style.borderColor = 'var(--border)';
+    document.getElementById('ma-percent').style.borderColor = 'var(--border)';
+  }
+}
+
 // Initialize
 document.getElementById('payout-slider').value = document.getElementById('desired-payout').value;
 updateSliderValue();
+
+// Add event listener for age input
+document.getElementById('age').addEventListener('input', updateAllocationRates);
 </script>
 </body>
 </html>
