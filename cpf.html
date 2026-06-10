@@ -84,6 +84,15 @@ textarea.form-input{resize:vertical;min-height:70px}
 .result-value{font-size:18px;font-weight:700;color:var(--teal2)}
 .result-unit{font-size:11px;color:var(--muted);margin-left:4px}
 
+/* Retirement Sum Progress Bars */
+.sum-progress{width:100%;height:6px;border-radius:3px;background:rgba(255,255,255,.1);margin-top:6px;overflow:hidden}
+.sum-progress-fill{height:100%;border-radius:3px;transition:width .3s}
+.sum-progress-brs{background:var(--amber)}
+.sum-progress-ers{background:var(--blue)}
+.sum-progress-frs{background:var(--green)}
+.sum-progress-label{font-size:10px;color:var(--muted);margin-top:4px;display:flex;justify-content:space-between}
+.sum-progress-value{font-weight:600;color:var(--white)}
+
 .slider-container{margin-top:8px}
 .slider{width:100%;height:4px;border-radius:2px;background:rgba(255,255,255,.1);outline:none;-webkit-appearance:none}
 .slider::-webkit-slider-thumb{width:16px;height:16px;border-radius:50%;background:var(--teal);cursor:pointer;-webkit-appearance:none}
@@ -146,6 +155,16 @@ textarea.form-input{resize:vertical;min-height:70px}
           <input type="number" id="salary" class="form-input" value="5000" min="1000" max="30000">
         </div>
         <div class="form-group">
+          <label class="form-label">AWS + Bonus (S$)</label>
+          <input type="number" id="aws-bonus" class="form-input" value="0" min="0" step="100">
+        </div>
+      </div>
+      <div class="grid-2" style="margin-top: -16px;">
+        <div class="form-group">
+          <label class="form-label">Bonus Months</label>
+          <input type="number" id="bonus-months" class="form-input" value="1" min="1" max="12">
+        </div>
+        <div class="form-group">
           <label class="form-label">CPF Contribution Rate</label>
           <select id="contribution-rate" class="form-input">
             <option value="0.37">37% (Standard, ≤55)</option>
@@ -204,22 +223,6 @@ textarea.form-input{resize:vertical;min-height:70px}
       </div>
     </div>
 
-    <div class="cpf-section">
-      <div class="cpf-header">
-        <div class="cpf-title">Additional Wage Information</div>
-      </div>
-
-      <div class="grid-2">
-        <div class="form-group">
-          <label class="form-label">AWS + Bonus (S$)</label>
-          <input type="number" id="aws-bonus" class="form-input" value="0" min="0" step="100">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Number of Months</label>
-          <input type="number" id="bonus-months" class="form-input" value="1" min="1" max="12">
-        </div>
-      </div>
-    </div>
 
     <button class="btn btn-primary" onclick="calculateCPF()">Calculate CPF</button>
   </div>
@@ -476,6 +479,62 @@ function displayResults(results, gridId) {
       </div>
     </div>
   `).join('');
+
+  // Add Retirement Sum Progress Visualization for ages 55+
+  const age = parseInt(document.getElementById('age').value);
+  if (age >= 55 && gridId === 'results-grid') {
+    const raBalance = parseFloat(document.getElementById('ra-balance')?.value || 0);
+    const projectedRa = parseFloat(results.find(r => r.label === 'Projected RA at 65')?.value.replace(/,/g, '') || 0);
+
+    // Calculate progress towards each retirement sum
+    const brsProgress = Math.min((projectedRa / BRS_2026) * 100, 100);
+    const frsProgress = Math.min((projectedRa / FRS_2026) * 100, 100);
+    const ersProgress = Math.min((projectedRa / ERS_2026) * 100, 100);
+
+    // Create progress visualization
+    const progressHTML = `
+      <div class="result-card" style="grid-column: 1 / -1;">
+        <div class="result-label">🎯 Retirement Sum Progress (Projected at 65)</div>
+        <div style="margin-top: 8px;">
+          <div class="sum-progress-label">
+            <span>BRS (S$${BRS_2026.toLocaleString()})</span>
+            <span class="sum-progress-value">${brsProgress.toFixed(1)}%</span>
+          </div>
+          <div class="sum-progress">
+            <div class="sum-progress-fill sum-progress-brs" style="width: ${brsProgress}%"></div>
+          </div>
+        </div>
+        <div style="margin-top: 12px;">
+          <div class="sum-progress-label">
+            <span>FRS (S$${FRS_2026.toLocaleString()})</span>
+            <span class="sum-progress-value">${frsProgress.toFixed(1)}%</span>
+          </div>
+          <div class="sum-progress">
+            <div class="sum-progress-fill sum-progress-frs" style="width: ${frsProgress}%"></div>
+          </div>
+        </div>
+        <div style="margin-top: 12px;">
+          <div class="sum-progress-label">
+            <span>ERS (S$${ERS_2026.toLocaleString()})</span>
+            <span class="sum-progress-value">${ersProgress.toFixed(1)}%</span>
+          </div>
+          <div class="sum-progress">
+            <div class="sum-progress-fill sum-progress-ers" style="width: ${ersProgress}%"></div>
+          </div>
+        </div>
+        <div style="margin-top: 12px;padding:8px;background:rgba(255,255,255,.04);border-radius:6px;font-size:11px;">
+          <strong>Status:</strong>
+          ${projectedRa >= ERS_2026 ? '🏆 ERS Achieved' :
+            projectedRa >= FRS_2026 ? '🎯 FRS Achieved' :
+            projectedRa >= BRS_2026 ? '⚠️ BRS Achieved' : '❌ Below BRS'}
+          ${projectedRa >= ERS_2026 ? '' :
+            ` | Shortfall: S$${(ERS_2026 - projectedRa).toLocaleString()} to ERS`}
+        </div>
+      </div>
+    `;
+
+    grid.insertAdjacentHTML('beforeend', progressHTML);
+  }
 }
 
 function updateSliderValue() {
@@ -526,8 +585,10 @@ const RA_ALLOCATION_RATES = {
   70: 1.0
 };
 
-// Full Retirement Sum (2026)
-const FRS_2026 = 205800;
+// Retirement Sums (2026)
+const BRS_2026 = 102900;  // Basic Retirement Sum
+const FRS_2026 = 205800;  // Full Retirement Sum
+const ERS_2026 = 308700;  // Enhanced Retirement Sum
 
 // Auto-update allocation rates based on age
 function updateAllocationRates() {
