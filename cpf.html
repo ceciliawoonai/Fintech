@@ -148,8 +148,11 @@ textarea.form-input{resize:vertical;min-height:70px}
         <div class="form-group">
           <label class="form-label">CPF Contribution Rate</label>
           <select id="contribution-rate" class="form-input">
-            <option value="0.37">37% (Standard)</option>
-            <option value="0.2">20% (Reduced)</option>
+            <option value="0.37">37% (Standard, ≤55)</option>
+            <option value="0.34">34% (55-60)</option>
+            <option value="0.25">25% (60-65)</option>
+            <option value="0.165">16.5% (65-70)</option>
+            <option value="0.125">12.5% (70+)</option>
           </select>
         </div>
       </div>
@@ -158,20 +161,21 @@ textarea.form-input{resize:vertical;min-height:70px}
     <div class="cpf-section">
       <div class="cpf-header">
         <div class="cpf-title">CPF Allocation</div>
+        <div class="cpf-strategy" id="strategy-label" style="font-size:12px;color:var(--teal2);font-weight:500">🏠 Maximizing housing runway</div>
       </div>
 
       <div class="grid-3">
         <div class="form-group">
           <label class="form-label">Ordinary Account (%)</label>
-          <input type="number" id="oa-percent" class="form-input" value="23" min="0" max="100" onchange="validateAllocation()">
+          <input type="number" id="oa-percent" class="form-input" value="62.17" min="0" max="100" onchange="validateAllocation()">
         </div>
         <div class="form-group">
           <label class="form-label" id="sa-label">Special Account (%)</label>
-          <input type="number" id="sa-percent" class="form-input" value="6" min="0" max="100" onchange="validateAllocation()">
+          <input type="number" id="sa-percent" class="form-input" value="16.21" min="0" max="100" onchange="validateAllocation()">
         </div>
         <div class="form-group">
           <label class="form-label" id="ma-label">MediSave Account (%)</label>
-          <input type="number" id="ma-percent" class="form-input" value="8" min="0" max="100" onchange="validateAllocation()">
+          <input type="number" id="ma-percent" class="form-input" value="21.62" min="0" max="100" onchange="validateAllocation()">
         </div>
       </div>
     </div>
@@ -291,6 +295,7 @@ function calculateCPF() {
   const oaBalance = parseFloat(document.getElementById('oa-balance').value);
   const saBalance = parseFloat(document.getElementById('sa-balance').value);
   const maBalance = parseFloat(document.getElementById('ma-balance').value);
+  const raBalance = parseFloat(document.getElementById('ra-balance')?.value || 0);
 
   // Calculate monthly contributions (Excel formula logic)
   const totalContribution = salary * contributionRate;
@@ -304,18 +309,35 @@ function calculateCPF() {
   const projectedOa = oaBalance + (oaContribution * 12 * ((Math.pow(annualGrowth, yearsToRetirement) - 1) / (annualGrowth - 1)));
   const projectedSa = saBalance + (saContribution * 12 * ((Math.pow(annualGrowth, yearsToRetirement) - 1) / (annualGrowth - 1)));
   const projectedMa = maBalance + (maContribution * 12 * ((Math.pow(annualGrowth, yearsToRetirement) - 1) / (annualGrowth - 1)));
+  const projectedRa = raBalance + (saContribution * 12 * ((Math.pow(annualGrowth, yearsToRetirement) - 1) / (annualGrowth - 1)));
 
-  // Display results
-  const results = [
-    { label: 'Monthly Contribution', value: totalContribution.toFixed(2), unit: '' },
-    { label: 'OA Contribution', value: oaContribution.toFixed(2), unit: '' },
-    { label: 'SA Contribution', value: saContribution.toFixed(2), unit: '' },
-    { label: 'MA Contribution', value: maContribution.toFixed(2), unit: '' },
-    { label: 'Projected OA at 65', value: projectedOa.toFixed(0), unit: '' },
-    { label: 'Projected SA at 65', value: projectedSa.toFixed(0), unit: '' },
-    { label: 'Projected MA at 65', value: projectedMa.toFixed(0), unit: '' },
-    { label: 'Total CPF at 65', value: (projectedOa + projectedSa + projectedMa).toFixed(0), unit: '' }
-  ];
+  // Display results based on age
+  const results = [];
+  if (age >= 55) {
+    // For ages 55+, show RA instead of SA
+    results.push(
+      { label: 'Monthly Contribution', value: totalContribution.toFixed(2), unit: '' },
+      { label: 'OA Contribution', value: oaContribution.toFixed(2), unit: '' },
+      { label: 'RA Contribution', value: saContribution.toFixed(2), unit: '' },
+      { label: 'MA Contribution', value: maContribution.toFixed(2), unit: '' },
+      { label: 'Projected OA at 65', value: projectedOa.toFixed(0), unit: '' },
+      { label: 'Projected RA at 65', value: projectedRa.toFixed(0), unit: '' },
+      { label: 'Projected MA at 65', value: projectedMa.toFixed(0), unit: '' },
+      { label: 'Total CPF at 65', value: (projectedOa + projectedRa + projectedMa).toFixed(0), unit: '' }
+    );
+  } else {
+    // For ages < 55, show standard SA
+    results.push(
+      { label: 'Monthly Contribution', value: totalContribution.toFixed(2), unit: '' },
+      { label: 'OA Contribution', value: oaContribution.toFixed(2), unit: '' },
+      { label: 'SA Contribution', value: saContribution.toFixed(2), unit: '' },
+      { label: 'MA Contribution', value: maContribution.toFixed(2), unit: '' },
+      { label: 'Projected OA at 65', value: projectedOa.toFixed(0), unit: '' },
+      { label: 'Projected SA at 65', value: projectedSa.toFixed(0), unit: '' },
+      { label: 'Projected MA at 65', value: projectedMa.toFixed(0), unit: '' },
+      { label: 'Total CPF at 65', value: (projectedOa + projectedSa + projectedMa).toFixed(0), unit: '' }
+    );
+  }
 
   displayResults(results, 'results-grid');
   document.getElementById('cpf-results').style.display = 'block';
@@ -406,20 +428,32 @@ function notify(msg) {
   setTimeout(() => n.classList.remove('show'), 2500);
 }
 
-// CPF Allocation Rates based on Age (from Excel CPF TB sheet)
+// CPF Allocation Rates based on Age (2026 rules)
 const CPF_ALLOCATION_RATES = {
-  // Age: [OA%, SA%, MA%]
-  20: [23, 6, 8],
-  25: [23, 6, 8],
-  30: [23, 6, 8],
-  35: [23, 6, 8],
-  40: [23, 6, 8],
-  45: [23, 6, 8],
-  50: [21, 8, 8],
-  55: [15, 13, 10],
-  60: [12, 15, 11],
-  65: [10, 17, 11]
+  // Age: [OA%, SA%, MA%, strategy, contributionRate]
+  20: [62.17, 16.21, 21.62, "🏠 Maximizing housing runway", 0.37],
+  25: [62.17, 16.21, 21.62, "🏠 Maximizing housing runway", 0.37],
+  30: [62.17, 16.21, 21.62, "🏠 Maximizing housing runway", 0.37],
+  35: [62.17, 16.21, 21.62, "🏠 Maximizing housing runway", 0.37],
+  40: [56.77, 18.91, 24.32, "📉 OA drops; SA/MA start to climb", 0.37],
+  45: [51.36, 21.62, 27.02, "⚖️ Balanced accumulation phase", 0.37],
+  50: [40.55, 31.08, 28.37, "🛡️ Aggressive retirement build-up", 0.37],
+  55: [12.0, 0, 10.5, "🔒 SA closed, RA created", 0.34],
+  60: [3.5, 0, 10.5, "🎯 Retirement focus", 0.25],
+  65: [1.0, 0, 10.5, "👵 Reduced contributions", 0.165],
+  70: [1.0, 0, 10.5, "🦽 Minimum contributions", 0.125]
 };
+
+// Retirement Account allocation rates for ages 55+
+const RA_ALLOCATION_RATES = {
+  55: 11.5,
+  60: 11.0,
+  65: 5.0,
+  70: 1.0
+};
+
+// Full Retirement Sum (2026)
+const FRS_2026 = 205800;
 
 // Auto-update allocation rates based on age
 function updateAllocationRates() {
@@ -442,8 +476,52 @@ function updateAllocationRates() {
   document.getElementById('sa-percent').value = rates[1];
   document.getElementById('ma-percent').value = rates[2];
 
+  // Update strategy label
+  document.getElementById('strategy-label').textContent = rates[3];
+
+  // Update contribution rate dropdown
+  document.getElementById('contribution-rate').value = rates[4];
+
+  // Handle age 55+ logic (SA -> RA transition)
+  if (age >= 55) {
+    // Hide SA input, show RA input
+    document.getElementById('sa-label').textContent = 'Retirement Account (%)';
+    document.getElementById('sa-percent').value = RA_ALLOCATION_RATES[closestAge] || 0;
+
+    // Add RA balance input if not exists
+    if (!document.getElementById('ra-balance')) {
+      addRetirementAccountFields();
+    }
+  } else {
+    // Show SA input
+    document.getElementById('sa-label').textContent = 'Special Account (%)';
+    removeRetirementAccountFields();
+  }
+
   // Auto-calculate when age changes
   calculateCPF();
+}
+
+// Add RA balance field for ages 55+
+function addRetirementAccountFields() {
+  const balancesGrid = document.querySelector('#panel-calculator .cpf-section:nth-child(3) .grid-3');
+  if (!document.getElementById('ra-balance')) {
+    const raField = document.createElement('div');
+    raField.className = 'form-group';
+    raField.innerHTML = `
+      <label class="form-label">RA Balance (S$)</label>
+      <input type="number" id="ra-balance" class="form-input" value="0" min="0">
+    `;
+    balancesGrid.appendChild(raField);
+  }
+}
+
+// Remove RA balance field for ages < 55
+function removeRetirementAccountFields() {
+  const raField = document.getElementById('ra-balance');
+  if (raField && raField.parentElement) {
+    raField.parentElement.remove();
+  }
 }
 
 // Validate that allocation percentages add up to 100%
