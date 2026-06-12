@@ -305,15 +305,15 @@ textarea.form-input{resize:vertical;min-height:70px}
       <div class="grid-3">
         <div class="form-group">
           <label class="form-label">Ordinary Account (%)</label>
-          <input type="number" id="oa-percent" class="form-input" value="62.17" min="0" max="100" onchange="validateAllocation()">
+          <input type="number" id="oa-percent" class="form-input" value="23.00" min="0" max="100" onchange="validateAllocation()">
         </div>
         <div class="form-group">
           <label class="form-label" id="sa-label">Special Account (%)</label>
-          <input type="number" id="sa-percent" class="form-input" value="16.21" min="0" max="100" onchange="validateAllocation()">
+          <input type="number" id="sa-percent" class="form-input" value="5.99" min="0" max="100" onchange="validateAllocation()">
         </div>
         <div class="form-group">
           <label class="form-label" id="ma-label">MediSave Account (%)</label>
-          <input type="number" id="ma-percent" class="form-input" value="21.62" min="0" max="100" onchange="validateAllocation()">
+          <input type="number" id="ma-percent" class="form-input" value="7.99" min="0" max="100" onchange="validateAllocation()">
         </div>
       </div>
     </div>
@@ -420,145 +420,6 @@ textarea.form-input{resize:vertical;min-height:70px}
 <div class="notif" id="notif"></div>
 
 <script>
-// CPF Calculation Functions (Based on Excel Logic)
-function calculateCPF() {
-  // Get input values
-  const age = parseInt(document.getElementById('age').value);
-  const salary = parseFloat(document.getElementById('salary').value);
-  const contributionRate = parseFloat(document.getElementById('contribution-rate').value);
-
-  const oaPercent = parseFloat(document.getElementById('oa-percent').value);
-  const saPercent = parseFloat(document.getElementById('sa-percent').value);
-  const maPercent = parseFloat(document.getElementById('ma-percent').value);
-
-  const oaBalance = parseFloat(document.getElementById('oa-balance').value);
-  const saBalance = parseFloat(document.getElementById('sa-balance').value);
-  const maBalance = parseFloat(document.getElementById('ma-balance').value);
-  const raBalance = parseFloat(document.getElementById('ra-balance')?.value || 0);
-
-  // Get AWS+Bonus information
-  const awsBonus = parseFloat(document.getElementById('aws-bonus')?.value || 0);
-  const bonusMonths = parseInt(document.getElementById('bonus-months')?.value || 1);
-
-  // Calculate annual gross wage and additional wage components
-  const annualSalary = salary * 12;
-  const annualBonus = awsBonus * bonusMonths;
-  const grossAnnualWage = annualSalary + annualBonus;
-
-  // Calculate monthly contributions (Excel formula logic)
-  const totalContribution = salary * contributionRate;
-  let oaContribution = totalContribution * (oaPercent / 100);
-  let saContribution = totalContribution * (saPercent / 100);
-  const maContribution = totalContribution * (maPercent / 100);
-
-  // Calculate employee and employer contributions (assuming standard split)
-  const employeeContributionRate = age <= 55 ? 0.2 : (age <= 60 ? 0.17 : (age <= 65 ? 0.115 : (age <= 70 ? 0.075 : 0.05)));
-  const employerContributionRate = contributionRate - employeeContributionRate;
-
-  const employeeContribution = salary * employeeContributionRate;
-  const employerContribution = salary * employerContributionRate;
-
-  // Apply 2026 FRS Exception Rule for ages 55+
-  let frsExceptionApplied = false;
-  if (age >= 55 && raBalance >= FRS_2026) {
-    // If RA has reached FRS, channel all RA contributions to OA
-    oaContribution += saContribution;
-    saContribution = 0;
-    frsExceptionApplied = true;
-  }
-
-  // Project balances with correct interest rates (4.0% for SA/RA, 2.5% for OA, 4.0% for MA)
-  const saRaGrowth = 1.04;  // 4.0% for SA and RA
-  const oaGrowth = 1.025;    // 2.5% for OA
-  const maGrowth = 1.04;     // 4.0% for MA
-  const yearsToRetirement = 65 - age;
-
-  // Future Value of Annuity Due formula for contributions
-  const saAnnuityFactor = (Math.pow(saRaGrowth, yearsToRetirement) - 1) / (saRaGrowth - 1) * saRaGrowth;
-  const oaAnnuityFactor = (Math.pow(oaGrowth, yearsToRetirement) - 1) / (oaGrowth - 1) * oaGrowth;
-  const maAnnuityFactor = (Math.pow(maGrowth, yearsToRetirement) - 1) / (maGrowth - 1) * maGrowth;
-
-  // Compound current balances AND future contributions with correct rates
-  const projectedOa = (oaBalance * Math.pow(oaGrowth, yearsToRetirement)) + (oaContribution * 12 * oaAnnuityFactor);
-  const projectedSa = (saBalance * Math.pow(saRaGrowth, yearsToRetirement)) + (saContribution * 12 * saAnnuityFactor);
-  const projectedMa = (maBalance * Math.pow(maGrowth, yearsToRetirement)) + (maContribution * 12 * maAnnuityFactor);
-  const projectedRa = Math.min((raBalance * Math.pow(saRaGrowth, yearsToRetirement)) + (saContribution * 12 * saAnnuityFactor), FRS_2026);
-
-  // Display results based on age
-  const results = [];
-
-  // Add wage and contribution summary for all ages with better visual distinction
-  results.push(
-    { label: 'Gross Annual Wage', value: grossAnnualWage.toFixed(0), unit: '', class: 'wage' },
-    { label: 'Annual Salary', value: annualSalary.toFixed(0), unit: '', class: 'wage' },
-    { label: 'Annual Bonus', value: annualBonus.toFixed(0), unit: '', class: 'wage' },
-    { label: 'Employee Contribution', value: employeeContribution.toFixed(2), unit: '', class: 'contribution' },
-    { label: 'Employer Contribution', value: employerContribution.toFixed(2), unit: '', class: 'contribution' },
-    { label: 'Total Monthly Contribution', value: totalContribution.toFixed(2), unit: '', class: 'contribution' }
-  );
-
-  if (age >= 55) {
-    // For ages 55+, show RA instead of SA (SA is closed at 55)
-    results.push(
-      { label: 'OA Contribution', value: oaContribution.toFixed(2), unit: '', class: 'contribution' },
-      { label: 'RA Contribution', value: saContribution.toFixed(2), unit: '', class: 'contribution' },
-      { label: 'MA Contribution', value: maContribution.toFixed(2), unit: '', class: 'contribution' },
-      { label: 'Projected OA at 65', value: projectedOa.toFixed(0), unit: '', class: 'projection' },
-      { label: 'Projected RA at 65', value: projectedRa.toFixed(0), unit: '', class: 'projection' },
-      { label: 'Projected MA at 65', value: projectedMa.toFixed(0), unit: '', class: 'projection' },
-      { label: 'Total CPF at 65', value: (projectedOa + projectedRa + projectedMa).toFixed(0), unit: '', class: 'summary' }
-    );
-
-    // Add FRS status information
-    const frsStatus = raBalance >= FRS_2026 ? 'REACHED' : 'NOT REACHED';
-    const frsProgress = ((raBalance / FRS_2026) * 100).toFixed(1) + '%';
-    results.push(
-      { label: 'FRS Status', value: frsStatus, unit: '', class: 'summary' },
-      { label: 'FRS Progress', value: frsProgress, unit: '', class: 'summary' },
-      { label: 'FRS Exception Applied', value: frsExceptionApplied ? 'YES' : 'NO', unit: '', class: 'summary' }
-    );
-  } else {
-    // For ages < 55, show standard SA (but also show what happens at 55+)
-    results.push(
-      { label: 'OA Contribution', value: oaContribution.toFixed(2), unit: '', class: 'contribution' },
-      { label: 'SA Contribution', value: saContribution.toFixed(2), unit: '', class: 'contribution' },
-      { label: 'MA Contribution', value: maContribution.toFixed(2), unit: '', class: 'contribution' },
-      { label: 'Projected OA at 54', value: projectedOa.toFixed(0), unit: '', class: 'projection' },
-      { label: 'Projected SA at 54', value: projectedSa.toFixed(0), unit: '', class: 'projection' },
-      { label: 'Projected MA at 54', value: projectedMa.toFixed(0), unit: '', class: 'projection' },
-      { label: 'Total CPF at 54', value: (projectedOa + projectedSa + projectedMa).toFixed(0), unit: '', class: 'summary' }
-    );
-
-    // Show projected values at 65 (after SA->RA conversion)
-    const yearsFrom55To65 = 10;
-    const saToRaConversion = projectedSa; // SA balance at 55 gets converted to RA
-    const raAt65 = (saToRaConversion * Math.pow(annualGrowth, yearsFrom55To65)) + (saContribution * 12 * ((Math.pow(annualGrowth, yearsFrom55To65) - 1) / (annualGrowth - 1) * annualGrowth));
-    const oaAt65 = projectedOa * Math.pow(annualGrowth, yearsFrom55To65);
-    const maAt65 = projectedMa * Math.pow(annualGrowth, yearsFrom55To65);
-
-    results.push(
-      { label: 'Projected OA at 65', value: oaAt65.toFixed(0), unit: '', class: 'projection' },
-      { label: 'Projected RA at 65', value: raAt65.toFixed(0), unit: '', class: 'projection' },
-      { label: 'Projected MA at 65', value: maAt65.toFixed(0), unit: '', class: 'projection' },
-      { label: 'Total CPF at 65', value: (oaAt65 + raAt65 + maAt65).toFixed(0), unit: '', class: 'summary' }
-    );
-  }
-
-  displayResults(results, 'results-grid');
-  document.getElementById('cpf-results').style.display = 'block';
-
-  // Show appropriate notification
-  if (age >= 55 && frsExceptionApplied) {
-    notify('FRS reached! Excess contributions channeled to OA.');
-    document.getElementById('frs-status-indicator').style.display = 'block';
-  } else if (age >= 55) {
-    notify('CPF calculation completed with RA allocation.');
-    document.getElementById('frs-status-indicator').style.display = 'none';
-  } else {
-    notify('CPF calculation completed!');
-    document.getElementById('frs-status-indicator').style.display = 'none';
-  }
-}
 
 // Retirement Projection Functions (Excel-based logic)
 function calculateRetirement() {
@@ -906,6 +767,7 @@ function calculateCPF() {
   const saRaGrowth = 1.04;  // 4.0% for SA and RA
   const oaGrowth = 1.025;    // 2.5% for OA
   const maGrowth = 1.04;     // 4.0% for MA
+  const annualGrowth = 1.04; // 4.0% for annual growth calculations
   const yearsToRetirement = 65 - age;
 
   // Future Value of Annuity Due formula for contributions
