@@ -299,7 +299,7 @@ textarea.form-input{resize:vertical;min-height:70px}
         <div class="cpf-strategy" id="strategy-label" style="font-size:12px;color:var(--teal2);font-weight:500">🏠 Maximizing housing runway</div>
       </div>
       <div id="frs-status-indicator" style="display:none;margin-top:8px;padding:8px 12px;background:rgba(255,255,255,.05);border-left:3px solid var(--amber);border-radius:6px;font-size:12px;">
-        <strong>🔒 FRS Exception Active:</strong> RA balance has reached Full Retirement Sum (S$205,800). Excess contributions are being channeled to OA.
+        <strong>🔒 FRS Exception Active:</strong> RA balance has reached Full Retirement Sum (S$220,440). Excess contributions are being channeled to OA.
       </div>
 
       <div class="grid-3">
@@ -752,34 +752,35 @@ function notify(msg) {
   setTimeout(() => n.classList.remove('show'), 2500);
 }
 
-// CPF Allocation Rates based on Age (2026 rules)
+// CPF Allocation Rates based on Age (2026 rules) - Updated to match official data
 const CPF_ALLOCATION_RATES = {
   // Age: [OA%, SA%, MA%, strategy, contributionRate]
-  20: [62.17, 16.21, 21.62, "🏠 Maximizing housing runway", 0.37],
-  25: [62.17, 16.21, 21.62, "🏠 Maximizing housing runway", 0.37],
-  30: [62.17, 16.21, 21.62, "🏠 Maximizing housing runway", 0.37],
-  35: [62.17, 16.21, 21.62, "🏠 Maximizing housing runway", 0.37],
-  40: [56.77, 18.91, 24.32, "📉 OA drops; SA/MA start to climb", 0.37],
-  45: [51.36, 21.62, 27.02, "⚖️ Balanced accumulation phase", 0.37],
-  50: [40.55, 31.08, 28.37, "🛡️ Aggressive retirement build-up", 0.37],
-  55: [12.0, 0, 10.5, "🔒 SA closed, RA created", 0.34],
-  60: [3.5, 0, 10.5, "🎯 Retirement focus", 0.25],
-  65: [1.0, 0, 10.5, "👵 Reduced contributions", 0.165],
-  70: [1.0, 0, 10.5, "🦽 Minimum contributions", 0.125]
+  // Note: These percentages represent distribution of the total contribution rate
+  20: [23.00, 5.99, 7.99, "🏠 Maximizing housing runway", 0.37],
+  25: [23.00, 5.99, 7.99, "🏠 Maximizing housing runway", 0.37],
+  30: [23.00, 5.99, 7.99, "🏠 Maximizing housing runway", 0.37],
+  35: [23.00, 5.99, 7.99, "🏠 Maximizing housing runway", 0.37],
+  40: [21.00, 6.99, 8.99, "📉 OA drops; SA/MA start to climb", 0.37],
+  45: [19.00, 7.99, 9.99, "⚖️ Balanced accumulation phase", 0.37],
+  50: [15.00, 11.50, 10.50, "🛡️ Aggressive retirement build-up", 0.37],
+  55: [10.03, 0, 11.01, "🔒 SA closed, RA created", 0.325],
+  60: [3.67, 0, 8.54, "🎯 Retirement focus", 0.235],
+  65: [1.00, 0, 10.50, "👵 Reduced contributions", 0.165],
+  70: [1.00, 0, 10.50, "🦽 Minimum contributions", 0.125]
 };
 
-// Retirement Account allocation rates for ages 55+
+// Retirement Account allocation rates for ages 55+ - Updated to match official data
 const RA_ALLOCATION_RATES = {
-  55: 11.5,
-  60: 11.0,
-  65: 5.0,
-  70: 1.0
+  55: 11.01,
+  60: 8.54,
+  65: 10.50,
+  70: 10.50
 };
 
-// Retirement Sums (2026)
-const BRS_2026 = 102900;  // Basic Retirement Sum
-const FRS_2026 = 205800;  // Full Retirement Sum
-const ERS_2026 = 308700;  // Enhanced Retirement Sum
+// Retirement Sums (2026) - Updated to official figures
+const BRS_2026 = 110200;  // Basic Retirement Sum
+const FRS_2026 = 220440;  // Full Retirement Sum
+const ERS_2026 = 440800;  // Enhanced Retirement Sum
 
 // Auto-update allocation rates based on age
 function updateAllocationRates() {
@@ -1186,34 +1187,6 @@ function notify(msg) {
   setTimeout(() => n.classList.remove('show'), 2500);
 }
 
-// CPF Allocation Rates based on Age (2026 rules)
-const CPF_ALLOCATION_RATES = {
-  // Age: [OA%, SA%, MA%, strategy, contributionRate]
-  20: [62.17, 16.21, 21.62, "🏠 Maximizing housing runway", 0.37],
-  25: [62.17, 16.21, 21.62, "🏠 Maximizing housing runway", 0.37],
-  30: [62.17, 16.21, 21.62, "🏠 Maximizing housing runway", 0.37],
-  35: [62.17, 16.21, 21.62, "🏠 Maximizing housing runway", 0.37],
-  40: [56.77, 18.91, 24.32, "📉 OA drops; SA/MA start to climb", 0.37],
-  45: [51.36, 21.62, 27.02, "⚖️ Balanced accumulation phase", 0.37],
-  50: [40.55, 31.08, 28.37, "🛡️ Aggressive retirement build-up", 0.37],
-  55: [12.0, 0, 10.5, "🔒 SA closed, RA created", 0.34],
-  60: [3.5, 0, 10.5, "🎯 Retirement focus", 0.25],
-  65: [1.0, 0, 10.5, "👵 Reduced contributions", 0.165],
-  70: [1.0, 0, 10.5, "🦽 Minimum contributions", 0.125]
-};
-
-// Retirement Account allocation rates for ages 55+
-const RA_ALLOCATION_RATES = {
-  55: 11.5,
-  60: 11.0,
-  65: 5.0,
-  70: 1.0
-};
-
-// Retirement Sums (2026)
-const BRS_2026 = 102900;  // Basic Retirement Sum
-const FRS_2026 = 205800;  // Full Retirement Sum
-const ERS_2026 = 308700;  // Enhanced Retirement Sum
 
 // Auto-update allocation rates based on age
 function updateAllocationRates() {
